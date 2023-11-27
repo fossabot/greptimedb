@@ -769,6 +769,9 @@
 <a href="#769" id="769">769</a>
 <a href="#770" id="770">770</a>
 <a href="#771" id="771">771</a>
+<a href="#772" id="772">772</a>
+<a href="#773" id="773">773</a>
+<a href="#774" id="774">774</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1099,13 +1102,16 @@
         <span class="kw">let </span>table_metadata_manager = Arc::new(TableMetadataManager::new(kv_backend.clone()));
 
         <span class="kw">let </span>cache_invalidator = Arc::new(DummyCacheInvalidator);
-        <span class="kw">let </span>ddl_executor = Arc::new(DdlManager::new(
-            procedure_manager,
-            datanode_manager,
-            cache_invalidator.clone(),
-            table_metadata_manager.clone(),
-            Arc::new(StandaloneTableMetadataCreator::new(kv_backend.clone())),
-        ));
+        <span class="kw">let </span>ddl_executor = Arc::new(
+            DdlManager::try_new(
+                procedure_manager,
+                datanode_manager,
+                cache_invalidator.clone(),
+                table_metadata_manager.clone(),
+                Arc::new(StandaloneTableMetadataCreator::new(kv_backend.clone())),
+            )
+            .context(error::InitDdlManagerSnafu)<span class="question-mark">?</span>,
+        );
 
         <span class="kw">let </span>statement_executor = Arc::new(StatementExecutor::new(
             catalog_manager.clone(),

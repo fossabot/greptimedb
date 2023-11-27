@@ -379,6 +379,9 @@
 <a href="#379" id="379">379</a>
 <a href="#380" id="380">380</a>
 <a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -409,10 +412,11 @@
 <span class="kw">use </span>common_meta::state_store::KvStateStore;
 <span class="kw">use </span>common_procedure::local::{LocalManager, ManagerConfig};
 <span class="kw">use </span>common_procedure::ProcedureManagerRef;
+<span class="kw">use </span>snafu::ResultExt;
 
 <span class="kw">use </span><span class="kw">crate</span>::cache_invalidator::MetasrvCacheInvalidator;
 <span class="kw">use </span><span class="kw">crate</span>::cluster::{MetaPeerClientBuilder, MetaPeerClientRef};
-<span class="kw">use </span><span class="kw">crate</span>::error::Result;
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::greptimedb_telemetry::get_greptimedb_telemetry_task;
 <span class="kw">use </span><span class="kw">crate</span>::handler::check_leader_handler::CheckLeaderHandler;
 <span class="kw">use </span><span class="kw">crate</span>::handler::collect_stats_handler::CollectStatsHandler;
@@ -577,8 +581,7 @@
             <span class="kw-2">&amp;</span>table_metadata_manager,
             (<span class="kw-2">&amp;</span>selector, <span class="kw-2">&amp;</span>selector_ctx),
             <span class="kw-2">&amp;</span>table_id_sequence,
-        );
-        <span class="kw">let _ </span>= ddl_manager.try_start();
+        )<span class="question-mark">?</span>;
         <span class="kw">let </span>opening_region_keeper = Arc::new(OpeningRegionKeeper::default());
 
         <span class="kw">let </span>handler_group = <span class="kw">match </span>handler_group {
@@ -711,7 +714,7 @@
     table_metadata_manager: <span class="kw-2">&amp;</span>TableMetadataManagerRef,
     (selector, selector_ctx): (<span class="kw-2">&amp;</span>SelectorRef, <span class="kw-2">&amp;</span>SelectorContext),
     table_id_sequence: <span class="kw-2">&amp;</span>SequenceRef,
-) -&gt; DdlManagerRef {
+) -&gt; <span class="prelude-ty">Result</span>&lt;DdlManagerRef&gt; {
     <span class="kw">let </span>datanode_clients = datanode_clients.unwrap_or_else(|| {
         <span class="kw">let </span>datanode_client_channel_config = ChannelConfig::new()
             .timeout(Duration::from_millis(
@@ -736,12 +739,15 @@
         table_id_sequence.clone(),
     ));
 
-    Arc::new(DdlManager::new(
-        procedure_manager.clone(),
-        datanode_clients,
-        cache_invalidator,
-        table_metadata_manager.clone(),
-        table_meta_allocator,
+    <span class="prelude-val">Ok</span>(Arc::new(
+        DdlManager::try_new(
+            procedure_manager.clone(),
+            datanode_clients,
+            cache_invalidator,
+            table_metadata_manager.clone(),
+            table_meta_allocator,
+        )
+        .context(error::InitDdlManagerSnafu)<span class="question-mark">?</span>,
     ))
 }
 

@@ -719,6 +719,14 @@
 <a href="#719" id="719">719</a>
 <a href="#720" id="720">720</a>
 <a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
+<a href="#727" id="727">727</a>
+<a href="#728" id="728">728</a>
+<a href="#729" id="729">729</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -762,6 +770,12 @@
         location: Location,
         peer_id: DatanodeId,
         region_id: RegionId,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to init ddl manager&quot;</span>))]
+    </span>InitDdlManager {
+        location: Location,
+        source: common_meta::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create default catalog and schema&quot;</span>))]
@@ -1406,7 +1420,9 @@
             | Error::UpdateTableRoute { source, .. }
             | Error::GetFullTableInfo { source, .. } =&gt; source.status_code(),
 
-            Error::InitMetadata { source, .. } =&gt; source.status_code(),
+            Error::InitMetadata { source, .. } | Error::InitDdlManager { source, .. } =&gt; {
+                source.status_code()
+            }
 
             Error::Other { source, .. } =&gt; source.status_code(),
         }

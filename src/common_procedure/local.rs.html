@@ -1077,6 +1077,13 @@
 <a href="#1077" id="1077">1077</a>
 <a href="#1078" id="1078">1078</a>
 <a href="#1079" id="1079">1079</a>
+<a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
+<a href="#1085" id="1085">1085</a>
+<a href="#1086" id="1086">1086</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1605,6 +1612,13 @@
         );
 
         <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="attr">#[cfg(any(test, feature = <span class="string">&quot;testing&quot;</span>))]
+    </span><span class="doccomment">/// Returns true if contains a specified loader.
+    </span><span class="kw">pub fn </span>contains_loader(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; bool {
+        <span class="kw">let </span>loaders = <span class="self">self</span>.manager_ctx.loaders.lock().unwrap();
+        loaders.contains_key(name)
     }
 }
 

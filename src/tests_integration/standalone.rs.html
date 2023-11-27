@@ -129,6 +129,9 @@
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -230,16 +233,19 @@
             .init()
             .<span class="kw">await
             </span>.unwrap();
-        procedure_manager.start().<span class="kw">await</span>.unwrap();
+
         <span class="kw">let </span>instance = Instance::try_new_standalone(
             kv_backend,
-            procedure_manager,
+            procedure_manager.clone(),
             catalog_manager,
             plugins,
             datanode.region_server(),
         )
         .<span class="kw">await
         </span>.unwrap();
+
+        <span class="comment">// Ensures all loaders are registered.
+        </span>procedure_manager.start().<span class="kw">await</span>.unwrap();
 
         test_util::prepare_another_catalog_and_schema(<span class="kw-2">&amp;</span>instance).<span class="kw">await</span>;
 
