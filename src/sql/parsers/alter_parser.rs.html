@@ -269,6 +269,9 @@
 <a href="#269" id="269">269</a>
 <a href="#270" id="270">270</a>
 <a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -304,20 +307,22 @@
         <span class="kw">let </span>parser = <span class="kw-2">&amp;mut </span><span class="self">self</span>.parser;
         parser.expect_keywords(<span class="kw-2">&amp;</span>[Keyword::ALTER, Keyword::TABLE])<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>table_name = parser.parse_object_name()<span class="question-mark">?</span>;
+        <span class="kw">let </span>raw_table_name = parser.parse_object_name()<span class="question-mark">?</span>;
+        <span class="kw">let </span>table_name = <span class="self">Self</span>::canonicalize_object_name(raw_table_name);
 
         <span class="kw">let </span>alter_operation = <span class="kw">if </span>parser.parse_keyword(Keyword::ADD) {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(constraint) = parser.parse_optional_table_constraint()<span class="question-mark">? </span>{
                 AlterTableOperation::AddConstraint(constraint)
             } <span class="kw">else </span>{
                 <span class="kw">let _ </span>= parser.parse_keyword(Keyword::COLUMN);
-                <span class="kw">let </span>column_def = parser.parse_column_def()<span class="question-mark">?</span>;
+                <span class="kw">let </span><span class="kw-2">mut </span>column_def = parser.parse_column_def()<span class="question-mark">?</span>;
+                column_def.name = <span class="self">Self</span>::canonicalize_identifier(column_def.name);
                 <span class="kw">let </span>location = <span class="kw">if </span>parser.parse_keyword(Keyword::FIRST) {
                     <span class="prelude-val">Some</span>(AddColumnLocation::First)
                 } <span class="kw">else if let </span>Token::Word(word) = parser.peek_token().token {
                     <span class="kw">if </span>word.value.to_ascii_uppercase() == <span class="string">&quot;AFTER&quot; </span>{
                         <span class="kw">let _ </span>= parser.next_token();
-                        <span class="kw">let </span>name = parser.parse_identifier()<span class="question-mark">?</span>;
+                        <span class="kw">let </span>name = <span class="self">Self</span>::canonicalize_identifier(parser.parse_identifier()<span class="question-mark">?</span>);
                         <span class="prelude-val">Some</span>(AddColumnLocation::After {
                             column_name: name.value,
                         })
@@ -334,7 +339,7 @@
             }
         } <span class="kw">else if </span>parser.parse_keyword(Keyword::DROP) {
             <span class="kw">if </span>parser.parse_keyword(Keyword::COLUMN) {
-                <span class="kw">let </span>name = <span class="self">self</span>.parser.parse_identifier()<span class="question-mark">?</span>;
+                <span class="kw">let </span>name = <span class="self">Self</span>::canonicalize_identifier(<span class="self">self</span>.parser.parse_identifier()<span class="question-mark">?</span>);
                 AlterTableOperation::DropColumn { name }
             } <span class="kw">else </span>{
                 <span class="kw">return </span><span class="prelude-val">Err</span>(ParserError::ParserError(<span class="macro">format!</span>(
@@ -343,7 +348,8 @@
                 )));
             }
         } <span class="kw">else if </span>parser.parse_keyword(Keyword::RENAME) {
-            <span class="kw">let </span>new_table_name_obj = parser.parse_object_name()<span class="question-mark">?</span>;
+            <span class="kw">let </span>new_table_name_obj_raw = parser.parse_object_name()<span class="question-mark">?</span>;
+            <span class="kw">let </span>new_table_name_obj = <span class="self">Self</span>::canonicalize_object_name(new_table_name_obj_raw);
             <span class="kw">let </span>new_table_name = <span class="kw">match </span><span class="kw-2">&amp;</span>new_table_name_obj.<span class="number">0</span>[..] {
                 [table] =&gt; table.value.clone(),
                 <span class="kw">_ </span>=&gt; {

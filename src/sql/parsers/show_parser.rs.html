@@ -387,6 +387,7 @@
 <a href="#387" id="387">387</a>
 <a href="#388" id="388">388</a>
 <a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -439,7 +440,7 @@
 
     <span class="doccomment">/// Parse SHOW CREATE TABLE statement
     </span><span class="kw">fn </span>parse_show_create_table(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Statement&gt; {
-        <span class="kw">let </span>table_name =
+        <span class="kw">let </span>raw_table_name =
             <span class="self">self</span>.parser
                 .parse_object_name()
                 .with_context(|<span class="kw">_</span>| error::UnexpectedSnafu {
@@ -447,6 +448,7 @@
                     expected: <span class="string">&quot;a table name&quot;</span>,
                     actual: <span class="self">self</span>.peek_token_as_string(),
                 })<span class="question-mark">?</span>;
+        <span class="kw">let </span>table_name = <span class="self">Self</span>::canonicalize_object_name(raw_table_name);
         <span class="macro">ensure!</span>(
             !table_name.<span class="number">0</span>.is_empty(),
             InvalidTableNameSnafu {

@@ -137,6 +137,7 @@
 <a href="#137" id="137">137</a>
 <a href="#138" id="138">138</a>
 <a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -165,7 +166,7 @@
         <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
         <span class="kw">let _ </span>= <span class="self">self</span>.parser.parse_keyword(Keyword::TABLE);
 
-        <span class="kw">let </span>table_ident =
+        <span class="kw">let </span>raw_table_ident =
             <span class="self">self</span>.parser
                 .parse_object_name()
                 .with_context(|<span class="kw">_</span>| error::UnexpectedSnafu {
@@ -173,6 +174,7 @@
                     expected: <span class="string">&quot;a table name&quot;</span>,
                     actual: <span class="self">self</span>.peek_token_as_string(),
                 })<span class="question-mark">?</span>;
+        <span class="kw">let </span>table_ident = <span class="self">Self</span>::canonicalize_object_name(raw_table_ident);
 
         <span class="macro">ensure!</span>(
             !table_ident.<span class="number">0</span>.is_empty(),

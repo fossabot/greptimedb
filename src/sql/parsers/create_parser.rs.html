@@ -1537,6 +1537,21 @@
 <a href="#1537" id="1537">1537</a>
 <a href="#1538" id="1538">1538</a>
 <a href="#1539" id="1539">1539</a>
+<a href="#1540" id="1540">1540</a>
+<a href="#1541" id="1541">1541</a>
+<a href="#1542" id="1542">1542</a>
+<a href="#1543" id="1543">1543</a>
+<a href="#1544" id="1544">1544</a>
+<a href="#1545" id="1545">1545</a>
+<a href="#1546" id="1546">1546</a>
+<a href="#1547" id="1547">1547</a>
+<a href="#1548" id="1548">1548</a>
+<a href="#1549" id="1549">1549</a>
+<a href="#1550" id="1550">1550</a>
+<a href="#1551" id="1551">1551</a>
+<a href="#1552" id="1552">1552</a>
+<a href="#1553" id="1553">1553</a>
+<a href="#1554" id="1554">1554</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1612,7 +1627,7 @@
         <span class="kw">let </span>if_not_exists =
             <span class="self">self</span>.parser
                 .parse_keywords(<span class="kw-2">&amp;</span>[Keyword::IF, Keyword::NOT, Keyword::EXISTS]);
-        <span class="kw">let </span>table_name = <span class="self">self
+        <span class="kw">let </span>raw_table_name = <span class="self">self
             </span>.parser
             .parse_object_name()
             .context(error::UnexpectedSnafu {
@@ -1620,6 +1635,7 @@
                 expected: <span class="string">&quot;a table name&quot;</span>,
                 actual: <span class="self">self</span>.peek_token_as_string(),
             })<span class="question-mark">?</span>;
+        <span class="kw">let </span>table_name = <span class="self">Self</span>::canonicalize_object_name(raw_table_name);
         <span class="kw">let </span>(columns, constraints) = <span class="self">self</span>.parse_columns()<span class="question-mark">?</span>;
         <span class="kw">let </span>engine = <span class="self">self</span>.parse_table_engine(common_catalog::consts::FILE_ENGINE)<span class="question-mark">?</span>;
         <span class="kw">let </span>options = <span class="self">self
@@ -1681,7 +1697,7 @@
             <span class="self">self</span>.parser
                 .parse_keywords(<span class="kw-2">&amp;</span>[Keyword::IF, Keyword::NOT, Keyword::EXISTS]);
 
-        <span class="kw">let </span>table_name = <span class="self">self
+        <span class="kw">let </span>raw_table_name = <span class="self">self
             </span>.parser
             .parse_object_name()
             .context(error::UnexpectedSnafu {
@@ -1689,6 +1705,7 @@
                 expected: <span class="string">&quot;a table name&quot;</span>,
                 actual: <span class="self">self</span>.peek_token_as_string(),
             })<span class="question-mark">?</span>;
+        <span class="kw">let </span>table_name = <span class="self">Self</span>::canonicalize_object_name(raw_table_name);
 
         <span class="kw">let </span>(columns, constraints) = <span class="self">self</span>.parse_columns()<span class="question-mark">?</span>;
 
@@ -1736,10 +1753,14 @@
                 actual: <span class="self">self</span>.peek_token_as_string(),
             })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>column_list = <span class="self">self
+        <span class="kw">let </span>raw_column_list = <span class="self">self
             </span>.parser
             .parse_parenthesized_column_list(Mandatory, <span class="bool-val">false</span>)
             .context(error::SyntaxSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>column_list = raw_column_list
+            .into_iter()
+            .map(<span class="self">Self</span>::canonicalize_identifier)
+            .collect();
 
         <span class="kw">let </span>entries = <span class="self">self</span>.parse_comma_separated(<span class="self">Self</span>::parse_partition_entry)<span class="question-mark">?</span>;
 
@@ -1974,7 +1995,7 @@
             };
         }
         <span class="prelude-val">Ok</span>(ColumnDef {
-            name,
+            name: <span class="self">Self</span>::canonicalize_identifier(name),
             data_type,
             collation,
             options,
@@ -2027,7 +2048,8 @@
 
     <span class="kw">fn </span>parse_optional_table_constraint(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;TableConstraint&gt;&gt; {
         <span class="kw">let </span>name = <span class="kw">if </span><span class="self">self</span>.parser.parse_keyword(Keyword::CONSTRAINT) {
-            <span class="prelude-val">Some</span>(<span class="self">self</span>.parser.parse_identifier().context(error::SyntaxSnafu)<span class="question-mark">?</span>)
+            <span class="kw">let </span>raw_name = <span class="self">self</span>.parser.parse_identifier().context(error::SyntaxSnafu)<span class="question-mark">?</span>;
+            <span class="prelude-val">Some</span>(<span class="self">Self</span>::canonicalize_identifier(raw_name))
         } <span class="kw">else </span>{
             <span class="prelude-val">None
         </span>};
@@ -2043,10 +2065,14 @@
                         expected: <span class="string">&quot;KEY&quot;</span>,
                         actual: <span class="self">self</span>.peek_token_as_string(),
                     })<span class="question-mark">?</span>;
-                <span class="kw">let </span>columns = <span class="self">self
+                <span class="kw">let </span>raw_columns = <span class="self">self
                     </span>.parser
                     .parse_parenthesized_column_list(Mandatory, <span class="bool-val">false</span>)
                     .context(error::SyntaxSnafu)<span class="question-mark">?</span>;
+                <span class="kw">let </span>columns = raw_columns
+                    .into_iter()
+                    .map(<span class="self">Self</span>::canonicalize_identifier)
+                    .collect();
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(TableConstraint::Unique {
                     name,
                     columns,
@@ -2065,10 +2091,14 @@
                         actual: <span class="self">self</span>.peek_token_as_string(),
                     })<span class="question-mark">?</span>;
 
-                <span class="kw">let </span>columns = <span class="self">self
+                <span class="kw">let </span>raw_columns = <span class="self">self
                     </span>.parser
                     .parse_parenthesized_column_list(Mandatory, <span class="bool-val">false</span>)
                     .context(error::SyntaxSnafu)<span class="question-mark">?</span>;
+                <span class="kw">let </span>columns = raw_columns
+                    .into_iter()
+                    .map(<span class="self">Self</span>::canonicalize_identifier)
+                    .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
                 <span class="macro">ensure!</span>(
                     columns.len() == <span class="number">1</span>,
