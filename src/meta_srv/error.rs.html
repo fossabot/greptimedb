@@ -727,6 +727,13 @@
 <a href="#727" id="727">727</a>
 <a href="#728" id="728">728</a>
 <a href="#729" id="729">729</a>
+<a href="#730" id="730">730</a>
+<a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1024,6 +1031,12 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to find table route for {table_id}&quot;</span>))]
     </span>TableRouteNotFound {
         table_id: TableId,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to find table route for {region_id}&quot;</span>))]
+    </span>RegionRouteNotFound {
+        region_id: RegionId,
         location: Location,
     },
 
@@ -1387,7 +1400,8 @@
             | Error::Unexpected { .. }
             | Error::Txn { .. }
             | Error::TableIdChanged { .. }
-            | Error::RegionOpeningRace { .. } =&gt; StatusCode::Unexpected,
+            | Error::RegionOpeningRace { .. }
+            | Error::RegionRouteNotFound { .. } =&gt; StatusCode::Unexpected,
             Error::TableNotFound { .. } =&gt; StatusCode::TableNotFound,
             Error::InvalidateTableCache { source, .. } =&gt; source.status_code(),
             Error::RequestDatanode { source, .. } =&gt; source.status_code(),
