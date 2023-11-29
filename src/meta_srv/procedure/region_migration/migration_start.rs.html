@@ -336,7 +336,7 @@
         <span class="kw">if </span><span class="self">self</span>.check_leader_region_on_peer(<span class="kw-2">&amp;</span>region_route, to_peer)<span class="question-mark">? </span>{
             <span class="prelude-val">Ok</span>(Box::new(RegionMigrationEnd))
         } <span class="kw">else if </span><span class="self">self</span>.check_candidate_region_on_peer(<span class="kw-2">&amp;</span>region_route, to_peer) {
-            <span class="prelude-val">Ok</span>(Box::new(DowngradeLeaderRegion))
+            <span class="prelude-val">Ok</span>(Box::&lt;DowngradeLeaderRegion&gt;::default())
         } <span class="kw">else </span>{
             <span class="prelude-val">Ok</span>(Box::new(OpenCandidateRegion))
         }

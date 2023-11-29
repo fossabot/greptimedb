@@ -379,6 +379,32 @@
 <a href="#379" id="379">379</a>
 <a href="#380" id="380">380</a>
 <a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -400,9 +426,11 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>test_util;
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>update_metadata;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>upgrade_candidate_region;
 
 <span class="kw">use </span>std::any::Any;
 <span class="kw">use </span>std::fmt::Debug;
+<span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>common_meta::key::table_route::TableRouteValue;
 <span class="kw">use </span>common_meta::key::{DeserializedValueWithBytes, TableMetadataManagerRef};
@@ -415,6 +443,7 @@
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::{location, Location, OptionExt, ResultExt};
 <span class="kw">use </span>store_api::storage::RegionId;
+<span class="kw">use </span>tokio::time::Instant;
 
 <span class="kw">use </span><span class="self">self</span>::migration_start::RegionMigrationStart;
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, Error, <span class="prelude-ty">Result</span>};
@@ -461,6 +490,29 @@
     </span>opening_region_guard: <span class="prelude-ty">Option</span>&lt;OpeningRegionGuard&gt;,
     <span class="doccomment">/// `table_route_info` is stored via previous steps for future use.
     </span>table_route_info: <span class="prelude-ty">Option</span>&lt;DeserializedValueWithBytes&lt;TableRouteValue&gt;&gt;,
+    <span class="doccomment">/// The deadline of leader region lease.
+    </span>leader_region_lease_deadline: <span class="prelude-ty">Option</span>&lt;Instant&gt;,
+    <span class="doccomment">/// The last_entry_id of leader region.
+    </span>leader_region_last_entry_id: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+}
+
+<span class="kw">impl </span>VolatileContext {
+    <span class="doccomment">/// Sets the `leader_region_lease_deadline` if it does not exist.
+    </span><span class="kw">pub fn </span>set_leader_region_lease_deadline(<span class="kw-2">&amp;mut </span><span class="self">self</span>, lease_timeout: Duration) {
+        <span class="kw">if </span><span class="self">self</span>.leader_region_lease_deadline.is_none() {
+            <span class="self">self</span>.leader_region_lease_deadline = <span class="prelude-val">Some</span>(Instant::now() + lease_timeout);
+        }
+    }
+
+    <span class="doccomment">/// Resets the `leader_region_lease_deadline`.
+    </span><span class="kw">pub fn </span>reset_leader_region_lease_deadline(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.leader_region_lease_deadline = <span class="prelude-val">None</span>;
+    }
+
+    <span class="doccomment">/// Sets the `leader_region_last_entry_id`.
+    </span><span class="kw">pub fn </span>set_last_entry_id(<span class="kw-2">&amp;mut </span><span class="self">self</span>, last_entry_id: u64) {
+        <span class="self">self</span>.leader_region_last_entry_id = <span class="prelude-val">Some</span>(last_entry_id)
+    }
 }
 
 <span class="doccomment">/// Used to generate new [Context].
