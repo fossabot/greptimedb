@@ -369,6 +369,9 @@
 <a href="#369" id="369">369</a>
 <a href="#370" id="370">370</a>
 <a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -404,6 +407,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::config::MitoConfig;
 <span class="kw">use </span><span class="kw">crate</span>::error::{EmptyRegionDirSnafu, ObjectStoreNotFoundSnafu, RegionCorruptedSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::manifest::manager::{RegionManifestManager, RegionManifestOptions};
+<span class="kw">use </span><span class="kw">crate</span>::manifest::storage::manifest_compress_type;
 <span class="kw">use </span><span class="kw">crate</span>::memtable::MemtableBuilderRef;
 <span class="kw">use </span><span class="kw">crate</span>::region::options::RegionOptions;
 <span class="kw">use </span><span class="kw">crate</span>::region::version::{VersionBuilder, VersionControl, VersionControlRef};
@@ -630,7 +634,9 @@
         <span class="prelude-val">Ok</span>(RegionManifestOptions {
             manifest_dir: new_manifest_dir(<span class="kw-2">&amp;</span><span class="self">self</span>.region_dir),
             object_store,
-            compress_type: config.manifest_compress_type,
+            <span class="comment">// We don&#39;t allow users to set the compression algorithm as we use it as a file suffix.
+            // Currently, the manifest storage doesn&#39;t have good support for changing compression algorithms.
+            </span>compress_type: manifest_compress_type(config.compress_manifest),
             checkpoint_distance: config.manifest_checkpoint_distance,
         })
     }

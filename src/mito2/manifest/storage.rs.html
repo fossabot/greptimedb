@@ -747,6 +747,7 @@
 <a href="#747" id="747">747</a>
 <a href="#748" id="748">748</a>
 <a href="#749" id="749">749</a>
+<a href="#750" id="750">750</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -791,7 +792,8 @@
 /// So when we encounter problems, we need to fall back to `FALL_BACK_COMPRESS_TYPE` for processing.
 </span><span class="kw">const </span>FALL_BACK_COMPRESS_TYPE: CompressionType = CompressionType::Uncompressed;
 
-<span class="attr">#[inline]
+<span class="doccomment">/// Returns the [CompressionType] according to whether to compress manifest files.
+</span><span class="attr">#[inline]
 </span><span class="kw">pub const fn </span>manifest_compress_type(compress: bool) -&gt; CompressionType {
     <span class="kw">if </span>compress {
         DEFAULT_MANIFEST_COMPRESSION_TYPE

@@ -133,7 +133,6 @@
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -153,7 +152,6 @@
 </span><span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
-<span class="kw">use </span>common_datasource::compression::CompressionType;
 <span class="kw">use </span>common_telemetry::warn;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
@@ -178,8 +176,8 @@
     </span><span class="doccomment">/// Number of meta action updated to trigger a new checkpoint
     /// for the manifest (default 10).
     </span><span class="kw">pub </span>manifest_checkpoint_distance: u64,
-    <span class="doccomment">/// Manifest compression type (default uncompressed).
-    </span><span class="kw">pub </span>manifest_compress_type: CompressionType,
+    <span class="doccomment">/// Whether to compress manifest and checkpoint file by gzip (default false).
+    </span><span class="kw">pub </span>compress_manifest: bool,
 
     <span class="comment">// Background job configs:
     </span><span class="doccomment">/// Max number of running background jobs (default 4).
@@ -214,7 +212,7 @@
             worker_channel_size: <span class="number">128</span>,
             worker_request_batch_size: <span class="number">64</span>,
             manifest_checkpoint_distance: <span class="number">10</span>,
-            manifest_compress_type: CompressionType::Uncompressed,
+            compress_manifest: <span class="bool-val">false</span>,
             max_background_jobs: DEFAULT_MAX_BG_JOB,
             auto_flush_interval: Duration::from_secs(<span class="number">30 </span>* <span class="number">60</span>),
             global_write_buffer_size: ReadableSize::gb(<span class="number">1</span>),
