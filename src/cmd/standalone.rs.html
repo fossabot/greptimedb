@@ -649,6 +649,13 @@
 <a href="#649" id="649">649</a>
 <a href="#650" id="650">650</a>
 <a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
+<a href="#656" id="656">656</a>
+<a href="#657" id="657">657</a>
+<a href="#658" id="658">658</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -878,6 +885,9 @@
     </span>user_provider: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="attr">#[clap(long, default_value = <span class="string">&quot;GREPTIMEDB_STANDALONE&quot;</span>)]
     </span>env_prefix: String,
+    <span class="doccomment">/// The working home directory of this standalone instance.
+    </span><span class="attr">#[clap(long)]
+    </span>data_home: <span class="prelude-ty">Option</span>&lt;String&gt;,
 }
 
 <span class="kw">impl </span>StartCommand {
@@ -906,6 +916,10 @@
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.http_addr {
             opts.http.addr = addr.clone()
+        }
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(data_home) = <span class="kw-2">&amp;</span><span class="self">self</span>.data_home {
+            opts.storage.data_home = data_home.clone();
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.rpc_addr {

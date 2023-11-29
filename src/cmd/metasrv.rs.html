@@ -354,6 +354,13 @@
 <a href="#354" id="354">354</a>
 <a href="#355" id="355">355</a>
 <a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -456,6 +463,9 @@
     </span>http_timeout: <span class="prelude-ty">Option</span>&lt;u64&gt;,
     <span class="attr">#[clap(long, default_value = <span class="string">&quot;GREPTIMEDB_METASRV&quot;</span>)]
     </span>env_prefix: String,
+    <span class="doccomment">/// The working home directory of this metasrv instance.
+    </span><span class="attr">#[clap(long)]
+    </span>data_home: <span class="prelude-ty">Option</span>&lt;String&gt;,
 }
 
 <span class="kw">impl </span>StartCommand {
@@ -506,6 +516,10 @@
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(http_timeout) = <span class="self">self</span>.http_timeout {
             opts.http.timeout = Duration::from_secs(http_timeout);
+        }
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(data_home) = <span class="kw-2">&amp;</span><span class="self">self</span>.data_home {
+            opts.data_home = data_home.clone();
         }
 
         <span class="comment">// Disable dashboard in metasrv.
