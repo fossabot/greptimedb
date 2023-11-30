@@ -941,8 +941,8 @@
         <span class="macro">define_logical_primitive_type!</span>(<span class="macro-nonterminal">$Native</span>, <span class="macro-nonterminal">$TypeId</span>, <span class="macro-nonterminal">$DataType</span>, <span class="macro-nonterminal">$Largest</span>);
 
         <span class="kw">impl </span>DataType <span class="kw">for </span><span class="macro-nonterminal">$DataType </span>{
-            <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-                <span class="macro">stringify!</span>(<span class="macro-nonterminal">$TypeId</span>)
+            <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
+                <span class="macro">stringify!</span>(<span class="macro-nonterminal">$TypeId</span>).to_string()
             }
 
             <span class="kw">fn </span>logical_type_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LogicalTypeId {
@@ -1040,9 +1040,9 @@
 <span class="macro">define_logical_primitive_type!</span>(i32, Int32, Int32Type, Int64Type);
 
 <span class="kw">impl </span>DataType <span class="kw">for </span>Int64Type {
-    <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-        <span class="string">&quot;Int64&quot;
-    </span>}
+    <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
+        <span class="string">&quot;Int64&quot;</span>.to_string()
+    }
 
     <span class="kw">fn </span>logical_type_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LogicalTypeId {
         LogicalTypeId::Int64
@@ -1087,9 +1087,9 @@
 }
 
 <span class="kw">impl </span>DataType <span class="kw">for </span>Int32Type {
-    <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-        <span class="string">&quot;Int32&quot;
-    </span>}
+    <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
+        <span class="string">&quot;Int32&quot;</span>.to_string()
+    }
 
     <span class="kw">fn </span>logical_type_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LogicalTypeId {
         LogicalTypeId::Int32

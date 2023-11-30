@@ -123,9 +123,9 @@
 }
 
 <span class="kw">impl </span>DataType <span class="kw">for </span>StringType {
-    <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-        <span class="string">&quot;String&quot;
-    </span>}
+    <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
+        <span class="string">&quot;String&quot;</span>.to_string()
+    }
 
     <span class="kw">fn </span>logical_type_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LogicalTypeId {
         LogicalTypeId::String

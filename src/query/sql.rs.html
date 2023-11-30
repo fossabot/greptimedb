@@ -602,6 +602,9 @@
 <a href="#602" id="602">602</a>
 <a href="#603" id="603">603</a>
 <a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -890,8 +893,11 @@
 }
 
 <span class="kw">fn </span>describe_column_types(columns_schemas: <span class="kw-2">&amp;</span>[ColumnSchema]) -&gt; VectorRef {
-    Arc::new(StringVector::from_iterator(
-        columns_schemas.iter().map(|cs| cs.data_type.name()),
+    Arc::new(StringVector::from(
+        columns_schemas
+            .iter()
+            .map(|cs| cs.data_type.name())
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
     ))
 }
 
