@@ -636,10 +636,6 @@
 <a href="#636" id="636">636</a>
 <a href="#637" id="637">637</a>
 <a href="#638" id="638">638</a>
-<a href="#639" id="639">639</a>
-<a href="#640" id="640">640</a>
-<a href="#641" id="641">641</a>
-<a href="#642" id="642">642</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -926,23 +922,21 @@
             ArrowDataType::Date64 =&gt; Arc::new(DateTimeVector::try_from_arrow_array(array)<span class="question-mark">?</span>),
             ArrowDataType::List(<span class="kw">_</span>) =&gt; Arc::new(ListVector::try_from_arrow_array(array)<span class="question-mark">?</span>),
             ArrowDataType::Timestamp(unit, <span class="kw">_</span>) =&gt; <span class="kw">match </span>unit {
-                TimeUnit::Second =&gt; Arc::new(
-                    TimestampSecondVector::try_from_arrow_timestamp_array(array)<span class="question-mark">?</span>,
-                ),
-                TimeUnit::Millisecond =&gt; Arc::new(
-                    TimestampMillisecondVector::try_from_arrow_timestamp_array(array)<span class="question-mark">?</span>,
-                ),
-                TimeUnit::Microsecond =&gt; Arc::new(
-                    TimestampMicrosecondVector::try_from_arrow_timestamp_array(array)<span class="question-mark">?</span>,
-                ),
-                TimeUnit::Nanosecond =&gt; Arc::new(
-                    TimestampNanosecondVector::try_from_arrow_timestamp_array(array)<span class="question-mark">?</span>,
-                ),
+                TimeUnit::Second =&gt; Arc::new(TimestampSecondVector::try_from_arrow_array(array)<span class="question-mark">?</span>),
+                TimeUnit::Millisecond =&gt; {
+                    Arc::new(TimestampMillisecondVector::try_from_arrow_array(array)<span class="question-mark">?</span>)
+                }
+                TimeUnit::Microsecond =&gt; {
+                    Arc::new(TimestampMicrosecondVector::try_from_arrow_array(array)<span class="question-mark">?</span>)
+                }
+                TimeUnit::Nanosecond =&gt; {
+                    Arc::new(TimestampNanosecondVector::try_from_arrow_array(array)<span class="question-mark">?</span>)
+                }
             },
             ArrowDataType::Time32(unit) =&gt; <span class="kw">match </span>unit {
-                TimeUnit::Second =&gt; Arc::new(TimeSecondVector::try_from_arrow_time_array(array)<span class="question-mark">?</span>),
+                TimeUnit::Second =&gt; Arc::new(TimeSecondVector::try_from_arrow_array(array)<span class="question-mark">?</span>),
                 TimeUnit::Millisecond =&gt; {
-                    Arc::new(TimeMillisecondVector::try_from_arrow_time_array(array)<span class="question-mark">?</span>)
+                    Arc::new(TimeMillisecondVector::try_from_arrow_array(array)<span class="question-mark">?</span>)
                 }
                 <span class="comment">// Arrow use time32 for second/millisecond.
                 </span><span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(
@@ -952,10 +946,10 @@
             },
             ArrowDataType::Time64(unit) =&gt; <span class="kw">match </span>unit {
                 TimeUnit::Microsecond =&gt; {
-                    Arc::new(TimeMicrosecondVector::try_from_arrow_time_array(array)<span class="question-mark">?</span>)
+                    Arc::new(TimeMicrosecondVector::try_from_arrow_array(array)<span class="question-mark">?</span>)
                 }
                 TimeUnit::Nanosecond =&gt; {
-                    Arc::new(TimeNanosecondVector::try_from_arrow_time_array(array)<span class="question-mark">?</span>)
+                    Arc::new(TimeNanosecondVector::try_from_arrow_array(array)<span class="question-mark">?</span>)
                 }
                 <span class="comment">// Arrow use time64 for microsecond/nanosecond.
                 </span><span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(
@@ -964,29 +958,27 @@
                 ),
             },
             ArrowDataType::Interval(unit) =&gt; <span class="kw">match </span>unit {
-                IntervalUnit::YearMonth =&gt; Arc::new(
-                    IntervalYearMonthVector::try_from_arrow_interval_array(array)<span class="question-mark">?</span>,
-                ),
-                IntervalUnit::DayTime =&gt; {
-                    Arc::new(IntervalDayTimeVector::try_from_arrow_interval_array(array)<span class="question-mark">?</span>)
+                IntervalUnit::YearMonth =&gt; {
+                    Arc::new(IntervalYearMonthVector::try_from_arrow_array(array)<span class="question-mark">?</span>)
                 }
-                IntervalUnit::MonthDayNano =&gt; Arc::new(
-                    IntervalMonthDayNanoVector::try_from_arrow_interval_array(array)<span class="question-mark">?</span>,
-                ),
+                IntervalUnit::DayTime =&gt; {
+                    Arc::new(IntervalDayTimeVector::try_from_arrow_array(array)<span class="question-mark">?</span>)
+                }
+                IntervalUnit::MonthDayNano =&gt; {
+                    Arc::new(IntervalMonthDayNanoVector::try_from_arrow_array(array)<span class="question-mark">?</span>)
+                }
             },
             ArrowDataType::Duration(unit) =&gt; <span class="kw">match </span>unit {
-                TimeUnit::Second =&gt; {
-                    Arc::new(DurationSecondVector::try_from_arrow_duration_array(array)<span class="question-mark">?</span>)
+                TimeUnit::Second =&gt; Arc::new(DurationSecondVector::try_from_arrow_array(array)<span class="question-mark">?</span>),
+                TimeUnit::Millisecond =&gt; {
+                    Arc::new(DurationMillisecondVector::try_from_arrow_array(array)<span class="question-mark">?</span>)
                 }
-                TimeUnit::Millisecond =&gt; Arc::new(
-                    DurationMillisecondVector::try_from_arrow_duration_array(array)<span class="question-mark">?</span>,
-                ),
-                TimeUnit::Microsecond =&gt; Arc::new(
-                    DurationMicrosecondVector::try_from_arrow_duration_array(array)<span class="question-mark">?</span>,
-                ),
-                TimeUnit::Nanosecond =&gt; Arc::new(
-                    DurationNanosecondVector::try_from_arrow_duration_array(array)<span class="question-mark">?</span>,
-                ),
+                TimeUnit::Microsecond =&gt; {
+                    Arc::new(DurationMicrosecondVector::try_from_arrow_array(array)<span class="question-mark">?</span>)
+                }
+                TimeUnit::Nanosecond =&gt; {
+                    Arc::new(DurationNanosecondVector::try_from_arrow_array(array)<span class="question-mark">?</span>)
+                }
             },
             ArrowDataType::Decimal128(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; {
                 Arc::new(Decimal128Vector::try_from_arrow_array(array)<span class="question-mark">?</span>)

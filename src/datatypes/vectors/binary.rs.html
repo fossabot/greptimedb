@@ -349,12 +349,6 @@
 <a href="#349" id="349">349</a>
 <a href="#350" id="350">350</a>
 <a href="#351" id="351">351</a>
-<a href="#352" id="352">352</a>
-<a href="#353" id="353">353</a>
-<a href="#354" id="354">354</a>
-<a href="#355" id="355">355</a>
-<a href="#356" id="356">356</a>
-<a href="#357" id="357">357</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -372,7 +366,7 @@
 </span><span class="kw">use </span>std::any::Any;
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>arrow::array::{Array, ArrayBuilder, ArrayData, ArrayIter, ArrayRef};
+<span class="kw">use </span>arrow::array::{Array, ArrayBuilder, ArrayIter, ArrayRef};
 <span class="kw">use </span>snafu::ResultExt;
 
 <span class="kw">use </span><span class="kw">crate</span>::arrow_array::{BinaryArray, MutableBinaryArray};
@@ -392,10 +386,6 @@
 <span class="kw">impl </span>BinaryVector {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>as_arrow(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array {
         <span class="kw-2">&amp;</span><span class="self">self</span>.array
-    }
-
-    <span class="kw">fn </span>to_array_data(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ArrayData {
-        <span class="self">self</span>.array.to_data()
     }
 }
 
@@ -431,13 +421,11 @@
     }
 
     <span class="kw">fn </span>to_arrow_array(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ArrayRef {
-        <span class="kw">let </span>data = <span class="self">self</span>.to_array_data();
-        Arc::new(BinaryArray::from(data))
+        Arc::new(<span class="self">self</span>.array.clone())
     }
 
     <span class="kw">fn </span>to_boxed_arrow_array(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Box&lt;<span class="kw">dyn </span>Array&gt; {
-        <span class="kw">let </span>data = <span class="self">self</span>.to_array_data();
-        Box::new(BinaryArray::from(data))
+        Box::new(<span class="self">self</span>.array.clone())
     }
 
     <span class="kw">fn </span>validity(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Validity {

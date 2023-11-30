@@ -729,17 +729,6 @@
 <a href="#729" id="729">729</a>
 <a href="#730" id="730">730</a>
 <a href="#731" id="731">731</a>
-<a href="#732" id="732">732</a>
-<a href="#733" id="733">733</a>
-<a href="#734" id="734">734</a>
-<a href="#735" id="735">735</a>
-<a href="#736" id="736">736</a>
-<a href="#737" id="737">737</a>
-<a href="#738" id="738">738</a>
-<a href="#739" id="739">739</a>
-<a href="#740" id="740">740</a>
-<a href="#741" id="741">741</a>
-<a href="#742" id="742">742</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -788,17 +777,6 @@
             .map(|value_opt| value_opt.map(Helper::try_into_vector).transpose())
     }
 
-    <span class="kw">fn </span>to_array_data(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ArrayData {
-        <span class="self">self</span>.array.to_data()
-    }
-
-    <span class="kw">fn </span>from_array_data_and_type(data: ArrayData, item_type: ConcreteDataType) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            array: ListArray::from(data),
-            item_type,
-        }
-    }
-
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>as_arrow(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array {
         <span class="kw-2">&amp;</span><span class="self">self</span>.array
     }
@@ -822,13 +800,11 @@
     }
 
     <span class="kw">fn </span>to_arrow_array(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ArrayRef {
-        <span class="kw">let </span>data = <span class="self">self</span>.to_array_data();
-        Arc::new(ListArray::from(data))
+        Arc::new(<span class="self">self</span>.array.clone())
     }
 
     <span class="kw">fn </span>to_boxed_arrow_array(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Box&lt;<span class="kw">dyn </span>Array&gt; {
-        <span class="kw">let </span>data = <span class="self">self</span>.to_array_data();
-        Box::new(ListArray::from(data))
+        Box::new(<span class="self">self</span>.array.clone())
     }
 
     <span class="kw">fn </span>validity(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Validity {
@@ -848,8 +824,10 @@
     }
 
     <span class="kw">fn </span>slice(<span class="kw-2">&amp;</span><span class="self">self</span>, offset: usize, length: usize) -&gt; VectorRef {
-        <span class="kw">let </span>data = <span class="self">self</span>.array.to_data().slice(offset, length);
-        Arc::new(<span class="self">Self</span>::from_array_data_and_type(data, <span class="self">self</span>.item_type.clone()))
+        Arc::new(<span class="self">Self </span>{
+            array: <span class="self">self</span>.array.slice(offset, length),
+            item_type: <span class="self">self</span>.item_type.clone(),
+        })
     }
 
     <span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, index: usize) -&gt; Value {

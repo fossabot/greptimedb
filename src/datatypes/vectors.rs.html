@@ -424,7 +424,6 @@
 <a href="#424" id="424">424</a>
 <a href="#425" id="425">425</a>
 <a href="#426" id="426">426</a>
-<a href="#427" id="427">427</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -656,17 +655,16 @@
             ) -&gt; <span class="kw">crate</span>::error::Result&lt;<span class="macro-nonterminal">$Vector</span>&gt; {
                 <span class="kw">use </span>snafu::OptionExt;
 
-                <span class="kw">let </span>data = array
+                <span class="kw">let </span>arrow_array = array
                     .as_ref()
                     .as_any()
                     .downcast_ref::&lt;<span class="macro-nonterminal">$Array</span>&gt;()
                     .with_context(|| <span class="kw">crate</span>::error::ConversionSnafu {
                         from: <span class="macro">std::format!</span>(<span class="string">&quot;{:?}&quot;</span>, array.as_ref().data_type()),
                     })<span class="question-mark">?
-                    </span>.to_data();
+                    </span>.clone();
 
-                <span class="kw">let </span>concrete_array = <span class="macro-nonterminal">$Array::from</span>(data);
-                <span class="prelude-val">Ok</span>(<span class="macro-nonterminal">$Vector::from</span>(concrete_array))
+                <span class="prelude-val">Ok</span>(<span class="macro-nonterminal">$Vector::from</span>(arrow_array))
             }
         }
     };
