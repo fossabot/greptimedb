@@ -322,6 +322,12 @@
         source: common_meta::error::Error,
     },
 
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to init DDL manager&quot;</span>))]
+    </span>InitDdlManager {
+        location: Location,
+        source: common_meta::error::Error,
+    },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start procedure manager&quot;</span>))]
     </span>StartProcedureManager {
         location: Location,
@@ -510,13 +516,6 @@
         <span class="attr">#[snafu(source)]
         </span>error: std::io::Error,
     },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse address {}&quot;</span>, addr))]
-    </span>ParseAddr {
-        addr: String,
-        <span class="attr">#[snafu(source)]
-        </span>error: std::net::AddrParseError,
-    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -532,9 +531,11 @@
             Error::ShutdownMetaServer { source, .. } =&gt; source.status_code(),
             Error::BuildMetaServer { source, .. } =&gt; source.status_code(),
             Error::UnsupportedSelectorType { source, .. } =&gt; source.status_code(),
-            Error::IterStream { source, .. } | Error::InitMetadata { source, .. } =&gt; {
-                source.status_code()
-            }
+
+            Error::IterStream { source, .. }
+            | Error::InitMetadata { source, .. }
+            | Error::InitDdlManager { source, .. } =&gt; source.status_code(),
+
             Error::ConnectServer { source, .. } =&gt; source.status_code(),
             Error::MissingConfig { .. }
             | Error::LoadLayeredConfig { .. }
@@ -544,8 +545,7 @@
             | Error::NotDataFromOutput { .. }
             | Error::CreateDir { .. }
             | Error::EmptyResult { .. }
-            | Error::InvalidDatabaseName { .. }
-            | Error::ParseAddr { .. } =&gt; StatusCode::InvalidArguments,
+            | Error::InvalidDatabaseName { .. } =&gt; StatusCode::InvalidArguments,
 
             Error::StartProcedureManager { source, .. }
             | Error::StopProcedureManager { source, .. } =&gt; source.status_code(),

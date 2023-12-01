@@ -342,6 +342,19 @@
 <a href="#342" id="342">342</a>
 <a href="#343" id="343">343</a>
 <a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -362,11 +375,13 @@
 <span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>api::v1::meta::Role;
-<span class="kw">use </span>catalog::kvbackend::MetaKvBackend;
+<span class="kw">use </span>catalog::kvbackend::{CachedMetaKvBackend, MetaKvBackend};
 <span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>client::Client;
 <span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_grpc::channel_manager::{ChannelConfig, ChannelManager};
+<span class="kw">use </span>common_meta::heartbeat::handler::parse_mailbox_message::ParseMailboxMessageHandler;
+<span class="kw">use </span>common_meta::heartbeat::handler::HandlerGroupExecutor;
 <span class="kw">use </span>common_meta::kv_backend::chroot::ChrootKvBackend;
 <span class="kw">use </span>common_meta::kv_backend::etcd::EtcdStore;
 <span class="kw">use </span>common_meta::kv_backend::memory::MemoryKvBackend;
@@ -377,13 +392,16 @@
 <span class="kw">use </span>common_test_util::temp_dir::create_temp_dir;
 <span class="kw">use </span>datanode::config::{DatanodeOptions, ObjectStoreConfig};
 <span class="kw">use </span>datanode::datanode::{Datanode, DatanodeBuilder, ProcedureConfig};
-<span class="kw">use </span>frontend::frontend::FrontendOptions;
+<span class="kw">use </span>frontend::heartbeat::handler::invalidate_table_cache::InvalidateTableCacheHandler;
+<span class="kw">use </span>frontend::heartbeat::HeartbeatTask;
+<span class="kw">use </span>frontend::instance::builder::FrontendBuilder;
 <span class="kw">use </span>frontend::instance::{FrontendInstance, Instance <span class="kw">as </span>FeInstance};
 <span class="kw">use </span>meta_client::client::MetaClientBuilder;
 <span class="kw">use </span>meta_srv::cluster::MetaPeerClientRef;
 <span class="kw">use </span>meta_srv::metasrv::{MetaSrv, MetaSrvOptions};
 <span class="kw">use </span>meta_srv::mocks::MockInfo;
 <span class="kw">use </span>servers::grpc::GrpcServer;
+<span class="kw">use </span>servers::heartbeat_options::HeartbeatOptions;
 <span class="kw">use </span>servers::Mode;
 <span class="kw">use </span>tonic::transport::Server;
 <span class="kw">use </span>tower::service_fn;
@@ -596,18 +614,26 @@
         meta_client.start(<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>meta_srv.server_addr]).<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>meta_client = Arc::new(meta_client);
 
-        <span class="kw">let </span>frontend_opts = FrontendOptions::default();
+        <span class="kw">let </span>meta_backend = Arc::new(CachedMetaKvBackend::new(meta_client.clone()));
 
-        Arc::new(
-            FeInstance::try_new_distributed_with(
-                meta_client,
-                datanode_clients,
-                Plugins::default(),
-                <span class="kw-2">&amp;</span>frontend_opts,
-            )
+        <span class="kw">let </span>handlers_executor = HandlerGroupExecutor::new(<span class="macro">vec!</span>[
+            Arc::new(ParseMailboxMessageHandler),
+            Arc::new(InvalidateTableCacheHandler::new(meta_backend.clone())),
+        ]);
+
+        <span class="kw">let </span>heartbeat_task = HeartbeatTask::new(
+            meta_client.clone(),
+            HeartbeatOptions::default(),
+            Arc::new(handlers_executor),
+        );
+
+        <span class="kw">let </span>instance = FrontendBuilder::new(meta_backend, datanode_clients, meta_client)
+            .with_heartbeat_task(heartbeat_task)
+            .try_build()
             .<span class="kw">await
-            </span>.unwrap(),
-        )
+            </span>.unwrap();
+
+        Arc::new(instance)
     }
 }
 

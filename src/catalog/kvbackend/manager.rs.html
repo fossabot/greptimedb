@@ -279,17 +279,6 @@
 <a href="#279" id="279">279</a>
 <a href="#280" id="280">280</a>
 <a href="#281" id="281">281</a>
-<a href="#282" id="282">282</a>
-<a href="#283" id="283">283</a>
-<a href="#284" id="284">284</a>
-<a href="#285" id="285">285</a>
-<a href="#286" id="286">286</a>
-<a href="#287" id="287">287</a>
-<a href="#288" id="288">288</a>
-<a href="#289" id="289">289</a>
-<a href="#290" id="290">290</a>
-<a href="#291" id="291">291</a>
-<a href="#292" id="292">292</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -311,7 +300,6 @@
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_SCHEMA_NAME, INFORMATION_SCHEMA_NAME, NUMBERS_TABLE_ID};
 <span class="kw">use </span>common_error::ext::BoxedError;
 <span class="kw">use </span>common_meta::cache_invalidator::{CacheInvalidator, CacheInvalidatorRef, Context};
-<span class="kw">use </span>common_meta::datanode_manager::DatanodeManagerRef;
 <span class="kw">use </span>common_meta::error::Result <span class="kw">as </span>MetaResult;
 <span class="kw">use </span>common_meta::key::catalog_name::CatalogNameKey;
 <span class="kw">use </span>common_meta::key::schema_name::SchemaNameKey;
@@ -347,7 +335,6 @@
     </span>cache_invalidator: CacheInvalidatorRef,
     partition_manager: PartitionRuleManagerRef,
     table_metadata_manager: TableMetadataManagerRef,
-    datanode_manager: DatanodeManagerRef,
     <span class="doccomment">/// A sub-CatalogManager that handles system tables
     </span>system_catalog: SystemCatalog,
 }
@@ -368,16 +355,11 @@
 }
 
 <span class="kw">impl </span>KvBackendCatalogManager {
-    <span class="kw">pub fn </span>new(
-        backend: KvBackendRef,
-        cache_invalidator: CacheInvalidatorRef,
-        datanode_manager: DatanodeManagerRef,
-    ) -&gt; Arc&lt;<span class="self">Self</span>&gt; {
+    <span class="kw">pub fn </span>new(backend: KvBackendRef, cache_invalidator: CacheInvalidatorRef) -&gt; Arc&lt;<span class="self">Self</span>&gt; {
         Arc::new_cyclic(|me| <span class="self">Self </span>{
             partition_manager: Arc::new(PartitionRuleManager::new(backend.clone())),
             table_metadata_manager: Arc::new(TableMetadataManager::new(backend)),
             cache_invalidator,
-            datanode_manager,
             system_catalog: SystemCatalog {
                 catalog_manager: me.clone(),
             },
@@ -390,10 +372,6 @@
 
     <span class="kw">pub fn </span>table_metadata_manager_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TableMetadataManagerRef {
         <span class="kw-2">&amp;</span><span class="self">self</span>.table_metadata_manager
-    }
-
-    <span class="kw">pub fn </span>datanode_manager(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; DatanodeManagerRef {
-        <span class="self">self</span>.datanode_manager.clone()
     }
 }
 

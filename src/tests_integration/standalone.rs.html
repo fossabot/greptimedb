@@ -132,6 +132,8 @@
 <a href="#132" id="132">132</a>
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -148,16 +150,19 @@
 
 </span><span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>catalog::kvbackend::KvBackendCatalogManager;
 <span class="kw">use </span>cmd::options::MixOptions;
 <span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_config::KvBackendConfig;
-<span class="kw">use </span>common_meta::cache_invalidator::DummyKvCacheInvalidator;
+<span class="kw">use </span>common_meta::cache_invalidator::DummyCacheInvalidator;
+<span class="kw">use </span>common_meta::ddl_manager::DdlManager;
+<span class="kw">use </span>common_meta::key::TableMetadataManager;
 <span class="kw">use </span>common_procedure::options::ProcedureConfig;
 <span class="kw">use </span>common_telemetry::logging::LoggingOptions;
 <span class="kw">use </span>datanode::config::DatanodeOptions;
 <span class="kw">use </span>datanode::datanode::DatanodeBuilder;
 <span class="kw">use </span>frontend::frontend::FrontendOptions;
+<span class="kw">use </span>frontend::instance::builder::FrontendBuilder;
+<span class="kw">use </span>frontend::instance::standalone::StandaloneTableMetadataCreator;
 <span class="kw">use </span>frontend::instance::{FrontendInstance, Instance, StandaloneDatanodeManager};
 
 <span class="kw">use </span><span class="kw">crate</span>::test_util::{<span class="self">self</span>, create_tmp_dir_and_datanode_opts, StorageType, TestGuard};
@@ -222,30 +227,29 @@
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="kw">let </span>catalog_manager = KvBackendCatalogManager::new(
-            kv_backend.clone(),
-            Arc::new(DummyKvCacheInvalidator),
-            Arc::new(StandaloneDatanodeManager(datanode.region_server())),
+        <span class="kw">let </span>table_metadata_manager = Arc::new(TableMetadataManager::new(kv_backend.clone()));
+        table_metadata_manager.init().<span class="kw">await</span>.unwrap();
+
+        <span class="kw">let </span>datanode_manager = Arc::new(StandaloneDatanodeManager(datanode.region_server()));
+
+        <span class="kw">let </span>ddl_task_executor = Arc::new(
+            DdlManager::try_new(
+                procedure_manager.clone(),
+                datanode_manager.clone(),
+                Arc::new(DummyCacheInvalidator),
+                table_metadata_manager,
+                Arc::new(StandaloneTableMetadataCreator::new(kv_backend.clone())),
+            )
+            .unwrap(),
         );
 
-        catalog_manager
-            .table_metadata_manager_ref()
-            .init()
+        <span class="kw">let </span>instance = FrontendBuilder::new(kv_backend, datanode_manager, ddl_task_executor)
+            .with_plugin(plugins)
+            .try_build()
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="kw">let </span>instance = Instance::try_new_standalone(
-            kv_backend,
-            procedure_manager.clone(),
-            catalog_manager,
-            plugins,
-            datanode.region_server(),
-        )
-        .<span class="kw">await
-        </span>.unwrap();
-
-        <span class="comment">// Ensures all loaders are registered.
-        </span>procedure_manager.start().<span class="kw">await</span>.unwrap();
+        procedure_manager.start().<span class="kw">await</span>.unwrap();
 
         test_util::prepare_another_catalog_and_schema(<span class="kw-2">&amp;</span>instance).<span class="kw">await</span>;
 

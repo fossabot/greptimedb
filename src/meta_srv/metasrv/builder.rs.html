@@ -382,6 +382,20 @@
 <a href="#382" id="382">382</a>
 <a href="#383" id="383">383</a>
 <a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -403,12 +417,14 @@
 <span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_grpc::channel_manager::ChannelConfig;
+<span class="kw">use </span>common_meta::datanode_manager::DatanodeManagerRef;
+<span class="kw">use </span>common_meta::ddl::TableMetadataAllocatorRef;
 <span class="kw">use </span>common_meta::ddl_manager::{DdlManager, DdlManagerRef};
 <span class="kw">use </span>common_meta::distributed_time_constants;
 <span class="kw">use </span>common_meta::key::{TableMetadataManager, TableMetadataManagerRef};
 <span class="kw">use </span>common_meta::kv_backend::memory::MemoryKvBackend;
 <span class="kw">use </span>common_meta::kv_backend::{KvBackendRef, ResettableKvBackendRef};
-<span class="kw">use </span>common_meta::sequence::{Sequence, SequenceRef};
+<span class="kw">use </span>common_meta::sequence::Sequence;
 <span class="kw">use </span>common_meta::state_store::KvStateStore;
 <span class="kw">use </span>common_procedure::local::{LocalManager, ManagerConfig};
 <span class="kw">use </span>common_procedure::ProcedureManagerRef;
@@ -454,8 +470,9 @@
     election: <span class="prelude-ty">Option</span>&lt;ElectionRef&gt;,
     meta_peer_client: <span class="prelude-ty">Option</span>&lt;MetaPeerClientRef&gt;,
     lock: <span class="prelude-ty">Option</span>&lt;DistLockRef&gt;,
-    datanode_clients: <span class="prelude-ty">Option</span>&lt;Arc&lt;DatanodeClients&gt;&gt;,
+    datanode_manager: <span class="prelude-ty">Option</span>&lt;DatanodeManagerRef&gt;,
     plugins: <span class="prelude-ty">Option</span>&lt;Plugins&gt;,
+    table_metadata_allocator: <span class="prelude-ty">Option</span>&lt;TableMetadataAllocatorRef&gt;,
 }
 
 <span class="kw">impl </span>MetaSrvBuilder {
@@ -469,8 +486,9 @@
             election: <span class="prelude-val">None</span>,
             options: <span class="prelude-val">None</span>,
             lock: <span class="prelude-val">None</span>,
-            datanode_clients: <span class="prelude-val">None</span>,
+            datanode_manager: <span class="prelude-val">None</span>,
             plugins: <span class="prelude-val">None</span>,
+            table_metadata_allocator: <span class="prelude-val">None</span>,
         }
     }
 
@@ -514,13 +532,21 @@
         <span class="self">self
     </span>}
 
-    <span class="kw">pub fn </span>datanode_clients(<span class="kw-2">mut </span><span class="self">self</span>, clients: Arc&lt;DatanodeClients&gt;) -&gt; <span class="self">Self </span>{
-        <span class="self">self</span>.datanode_clients = <span class="prelude-val">Some</span>(clients);
+    <span class="kw">pub fn </span>datanode_manager(<span class="kw-2">mut </span><span class="self">self</span>, datanode_manager: DatanodeManagerRef) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.datanode_manager = <span class="prelude-val">Some</span>(datanode_manager);
         <span class="self">self
     </span>}
 
     <span class="kw">pub fn </span>plugins(<span class="kw-2">mut </span><span class="self">self</span>, plugins: Plugins) -&gt; <span class="self">Self </span>{
         <span class="self">self</span>.plugins = <span class="prelude-val">Some</span>(plugins);
+        <span class="self">self
+    </span>}
+
+    <span class="kw">pub fn </span>table_metadata_allocator(
+        <span class="kw-2">mut </span><span class="self">self</span>,
+        table_metadata_allocator: TableMetadataAllocatorRef,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.table_metadata_allocator = <span class="prelude-val">Some</span>(table_metadata_allocator);
         <span class="self">self
     </span>}
 
@@ -536,8 +562,9 @@
             selector,
             handler_group,
             lock,
-            datanode_clients,
+            datanode_manager,
             plugins,
+            table_metadata_allocator,
         } = <span class="self">self</span>;
 
         <span class="kw">let </span>options = options.unwrap_or_default();
@@ -573,14 +600,22 @@
             meta_peer_client: meta_peer_client.clone(),
             table_id: <span class="prelude-val">None</span>,
         };
+
+        <span class="kw">let </span>table_metadata_allocator = table_metadata_allocator.unwrap_or_else(|| {
+            Arc::new(MetaSrvTableMetadataAllocator::new(
+                selector_ctx.clone(),
+                selector.clone(),
+                table_id_sequence.clone(),
+            ))
+        });
+
         <span class="kw">let </span>ddl_manager = build_ddl_manager(
             <span class="kw-2">&amp;</span>options,
-            datanode_clients,
+            datanode_manager,
             <span class="kw-2">&amp;</span>procedure_manager,
             <span class="kw-2">&amp;</span>mailbox,
             <span class="kw-2">&amp;</span>table_metadata_manager,
-            (<span class="kw-2">&amp;</span>selector, <span class="kw-2">&amp;</span>selector_ctx),
-            <span class="kw-2">&amp;</span>table_id_sequence,
+            table_metadata_allocator,
         )<span class="question-mark">?</span>;
         <span class="kw">let </span>opening_region_keeper = Arc::new(OpeningRegionKeeper::default());
 
@@ -708,12 +743,11 @@
 
 <span class="kw">fn </span>build_ddl_manager(
     options: <span class="kw-2">&amp;</span>MetaSrvOptions,
-    datanode_clients: <span class="prelude-ty">Option</span>&lt;Arc&lt;DatanodeClients&gt;&gt;,
+    datanode_clients: <span class="prelude-ty">Option</span>&lt;DatanodeManagerRef&gt;,
     procedure_manager: <span class="kw-2">&amp;</span>ProcedureManagerRef,
     mailbox: <span class="kw-2">&amp;</span>MailboxRef,
     table_metadata_manager: <span class="kw-2">&amp;</span>TableMetadataManagerRef,
-    (selector, selector_ctx): (<span class="kw-2">&amp;</span>SelectorRef, <span class="kw-2">&amp;</span>SelectorContext),
-    table_id_sequence: <span class="kw-2">&amp;</span>SequenceRef,
+    table_metadata_allocator: TableMetadataAllocatorRef,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;DdlManagerRef&gt; {
     <span class="kw">let </span>datanode_clients = datanode_clients.unwrap_or_else(|| {
         <span class="kw">let </span>datanode_client_channel_config = ChannelConfig::new()
@@ -733,19 +767,13 @@
         },
     ));
 
-    <span class="kw">let </span>table_meta_allocator = Arc::new(MetaSrvTableMetadataAllocator::new(
-        selector_ctx.clone(),
-        selector.clone(),
-        table_id_sequence.clone(),
-    ));
-
     <span class="prelude-val">Ok</span>(Arc::new(
         DdlManager::try_new(
             procedure_manager.clone(),
             datanode_clients,
             cache_invalidator,
             table_metadata_manager.clone(),
-            table_meta_allocator,
+            table_metadata_allocator,
         )
         .context(error::InitDdlManagerSnafu)<span class="question-mark">?</span>,
     ))

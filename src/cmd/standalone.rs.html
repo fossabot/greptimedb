@@ -656,6 +656,13 @@
 <a href="#656" id="656">656</a>
 <a href="#657" id="657">657</a>
 <a href="#658" id="658">658</a>
+<a href="#659" id="659">659</a>
+<a href="#660" id="660">660</a>
+<a href="#661" id="661">661</a>
+<a href="#662" id="662">662</a>
+<a href="#663" id="663">663</a>
+<a href="#664" id="664">664</a>
+<a href="#665" id="665">665</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -673,21 +680,23 @@
 </span><span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::{fs, path};
 
-<span class="kw">use </span>catalog::kvbackend::KvBackendCatalogManager;
-<span class="kw">use </span>catalog::CatalogManagerRef;
 <span class="kw">use </span>clap::Parser;
-<span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_config::{metadata_store_dir, KvBackendConfig, WalConfig};
-<span class="kw">use </span>common_meta::cache_invalidator::DummyKvCacheInvalidator;
+<span class="kw">use </span>common_meta::cache_invalidator::DummyCacheInvalidator;
+<span class="kw">use </span>common_meta::datanode_manager::DatanodeManagerRef;
+<span class="kw">use </span>common_meta::ddl::DdlTaskExecutorRef;
+<span class="kw">use </span>common_meta::ddl_manager::DdlManager;
+<span class="kw">use </span>common_meta::key::{TableMetadataManager, TableMetadataManagerRef};
 <span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
 <span class="kw">use </span>common_procedure::ProcedureManagerRef;
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>common_telemetry::logging::LoggingOptions;
 <span class="kw">use </span>datanode::config::{DatanodeOptions, ProcedureConfig, RegionEngineConfig, StorageConfig};
 <span class="kw">use </span>datanode::datanode::{Datanode, DatanodeBuilder};
-<span class="kw">use </span>datanode::region_server::RegionServer;
 <span class="kw">use </span>file_engine::config::EngineConfig <span class="kw">as </span>FileEngineConfig;
 <span class="kw">use </span>frontend::frontend::FrontendOptions;
+<span class="kw">use </span>frontend::instance::builder::FrontendBuilder;
+<span class="kw">use </span>frontend::instance::standalone::StandaloneTableMetadataCreator;
 <span class="kw">use </span>frontend::instance::{FrontendInstance, Instance <span class="kw">as </span>FeInstance, StandaloneDatanodeManager};
 <span class="kw">use </span>frontend::service_config::{
     GrpcOptions, InfluxdbOptions, MysqlOptions, OpentsdbOptions, PostgresOptions, PromStoreOptions,
@@ -700,9 +709,9 @@
 <span class="kw">use </span>snafu::ResultExt;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    CreateDirSnafu, IllegalConfigSnafu, InitMetadataSnafu, <span class="prelude-ty">Result</span>, ShutdownDatanodeSnafu,
-    ShutdownFrontendSnafu, StartDatanodeSnafu, StartFrontendSnafu, StartProcedureManagerSnafu,
-    StopProcedureManagerSnafu,
+    CreateDirSnafu, IllegalConfigSnafu, InitDdlManagerSnafu, InitMetadataSnafu, <span class="prelude-ty">Result</span>,
+    ShutdownDatanodeSnafu, ShutdownFrontendSnafu, StartDatanodeSnafu, StartFrontendSnafu,
+    StartProcedureManagerSnafu, StopProcedureManagerSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::options::{MixOptions, Options, TopLevelOptions};
 
@@ -814,6 +823,7 @@
             wal: <span class="self">self</span>.wal,
             storage: <span class="self">self</span>.storage,
             region_engine: <span class="self">self</span>.region_engine,
+            rpc_addr: <span class="self">self</span>.grpc.addr,
             ..Default::default()
         }
     }
@@ -1005,35 +1015,24 @@
         .<span class="kw">await
         </span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>datanode = DatanodeBuilder::new(dn_opts, fe_plugins.clone())
-            .with_kv_backend(kv_backend.clone())
-            .build()
-            .<span class="kw">await
-            </span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>builder =
+            DatanodeBuilder::new(dn_opts, fe_plugins.clone()).with_kv_backend(kv_backend.clone());
+        <span class="kw">let </span>datanode = builder.build().<span class="kw">await</span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>region_server = datanode.region_server();
+        <span class="kw">let </span>datanode_manager = Arc::new(StandaloneDatanodeManager(datanode.region_server()));
 
-        <span class="kw">let </span>catalog_manager = KvBackendCatalogManager::new(
+        <span class="kw">let </span>ddl_task_executor = <span class="self">Self</span>::create_ddl_task_executor(
             kv_backend.clone(),
-            Arc::new(DummyKvCacheInvalidator),
-            Arc::new(StandaloneDatanodeManager(region_server.clone())),
-        );
-
-        catalog_manager
-            .table_metadata_manager_ref()
-            .init()
-            .<span class="kw">await
-            </span>.context(InitMetadataSnafu)<span class="question-mark">?</span>;
-
-        <span class="comment">// TODO: build frontend instance like in distributed mode
-        </span><span class="kw">let </span><span class="kw-2">mut </span>frontend = build_frontend(
-            fe_plugins,
-            kv_backend,
             procedure_manager.clone(),
-            catalog_manager,
-            region_server,
+            datanode_manager.clone(),
         )
         .<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="kw">let </span><span class="kw-2">mut </span>frontend = FrontendBuilder::new(kv_backend, datanode_manager, ddl_task_executor)
+            .with_plugin(fe_plugins)
+            .try_build()
+            .<span class="kw">await
+            </span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
 
         frontend
             .build_servers(opts)
@@ -1046,26 +1045,41 @@
             procedure_manager,
         })
     }
-}
 
-<span class="doccomment">/// Build frontend instance in standalone mode
-</span><span class="kw">async fn </span>build_frontend(
-    plugins: Plugins,
-    kv_backend: KvBackendRef,
-    procedure_manager: ProcedureManagerRef,
-    catalog_manager: CatalogManagerRef,
-    region_server: RegionServer,
-) -&gt; <span class="prelude-ty">Result</span>&lt;FeInstance&gt; {
-    <span class="kw">let </span>frontend_instance = FeInstance::try_new_standalone(
-        kv_backend,
-        procedure_manager,
-        catalog_manager,
-        plugins,
-        region_server,
-    )
-    .<span class="kw">await
-    </span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(frontend_instance)
+    <span class="kw">async fn </span>create_ddl_task_executor(
+        kv_backend: KvBackendRef,
+        procedure_manager: ProcedureManagerRef,
+        datanode_manager: DatanodeManagerRef,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;DdlTaskExecutorRef&gt; {
+        <span class="kw">let </span>table_metadata_manager =
+            <span class="self">Self</span>::create_table_metadata_manager(kv_backend.clone()).<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="kw">let </span>ddl_task_executor: DdlTaskExecutorRef = Arc::new(
+            DdlManager::try_new(
+                procedure_manager,
+                datanode_manager,
+                Arc::new(DummyCacheInvalidator),
+                table_metadata_manager,
+                Arc::new(StandaloneTableMetadataCreator::new(kv_backend)),
+            )
+            .context(InitDdlManagerSnafu)<span class="question-mark">?</span>,
+        );
+
+        <span class="prelude-val">Ok</span>(ddl_task_executor)
+    }
+
+    <span class="kw">async fn </span>create_table_metadata_manager(
+        kv_backend: KvBackendRef,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;TableMetadataManagerRef&gt; {
+        <span class="kw">let </span>table_metadata_manager = Arc::new(TableMetadataManager::new(kv_backend));
+
+        table_metadata_manager
+            .init()
+            .<span class="kw">await
+            </span>.context(InitMetadataSnafu)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(table_metadata_manager)
+    }
 }
 
 <span class="attr">#[cfg(test)]
