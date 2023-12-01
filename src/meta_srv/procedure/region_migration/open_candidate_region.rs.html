@@ -748,7 +748,7 @@
         <span class="kw">let </span>(tx, rx) = tokio::sync::mpsc::channel(<span class="number">1</span>);
 
         mailbox_ctx
-            .insert_heartbeat_response_receiver(to_peer_id, tx)
+            .insert_heartbeat_response_receiver(Channel::Datanode(to_peer_id), tx)
             .<span class="kw">await</span>;
 
         <span class="comment">// Sends an incorrect reply.
@@ -781,7 +781,7 @@
         <span class="kw">let </span>(tx, rx) = tokio::sync::mpsc::channel(<span class="number">1</span>);
 
         mailbox_ctx
-            .insert_heartbeat_response_receiver(to_peer_id, tx)
+            .insert_heartbeat_response_receiver(Channel::Datanode(to_peer_id), tx)
             .<span class="kw">await</span>;
 
         <span class="comment">// Sends an timeout error.
@@ -816,7 +816,7 @@
         <span class="kw">let </span>(tx, rx) = tokio::sync::mpsc::channel(<span class="number">1</span>);
 
         mailbox_ctx
-            .insert_heartbeat_response_receiver(to_peer_id, tx)
+            .insert_heartbeat_response_receiver(Channel::Datanode(to_peer_id), tx)
             .<span class="kw">await</span>;
 
         send_mock_reply(mailbox, rx, |id| {
@@ -868,7 +868,7 @@
         <span class="kw">let </span>(tx, rx) = tokio::sync::mpsc::channel(<span class="number">1</span>);
 
         mailbox_ctx
-            .insert_heartbeat_response_receiver(to_peer_id, tx)
+            .insert_heartbeat_response_receiver(Channel::Datanode(to_peer_id), tx)
             .<span class="kw">await</span>;
 
         send_mock_reply(mailbox, rx, |id| <span class="prelude-val">Ok</span>(new_open_region_reply(id, <span class="bool-val">true</span>, <span class="prelude-val">None</span>)));

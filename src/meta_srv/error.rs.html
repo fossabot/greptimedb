@@ -734,6 +734,10 @@
 <a href="#734" id="734">734</a>
 <a href="#735" id="735">735</a>
 <a href="#736" id="736">736</a>
+<a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -768,6 +772,9 @@
 #[snafu(visibility(<span class="kw">pub</span>))]
 #[stack_trace_debug]
 </span><span class="kw">pub enum </span>Error {
+    <span class="attr">#[snafu(display(<span class="string">&quot;The region migration procedure aborted, reason: {}&quot;</span>, reason))]
+    </span>MigrationAbort { location: Location, reason: String },
+
     <span class="attr">#[snafu(display(
         <span class="string">&quot;Another procedure is opening the region: {} on peer: {}&quot;</span>,
         region_id,
@@ -1401,7 +1408,8 @@
             | Error::Txn { .. }
             | Error::TableIdChanged { .. }
             | Error::RegionOpeningRace { .. }
-            | Error::RegionRouteNotFound { .. } =&gt; StatusCode::Unexpected,
+            | Error::RegionRouteNotFound { .. }
+            | Error::MigrationAbort { .. } =&gt; StatusCode::Unexpected,
             Error::TableNotFound { .. } =&gt; StatusCode::TableNotFound,
             Error::InvalidateTableCache { source, .. } =&gt; source.status_code(),
             Error::RequestDatanode { source, .. } =&gt; source.status_code(),
