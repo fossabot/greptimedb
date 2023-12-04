@@ -1320,6 +1320,51 @@
 <a href="#1320" id="1320">1320</a>
 <a href="#1321" id="1321">1321</a>
 <a href="#1322" id="1322">1322</a>
+<a href="#1323" id="1323">1323</a>
+<a href="#1324" id="1324">1324</a>
+<a href="#1325" id="1325">1325</a>
+<a href="#1326" id="1326">1326</a>
+<a href="#1327" id="1327">1327</a>
+<a href="#1328" id="1328">1328</a>
+<a href="#1329" id="1329">1329</a>
+<a href="#1330" id="1330">1330</a>
+<a href="#1331" id="1331">1331</a>
+<a href="#1332" id="1332">1332</a>
+<a href="#1333" id="1333">1333</a>
+<a href="#1334" id="1334">1334</a>
+<a href="#1335" id="1335">1335</a>
+<a href="#1336" id="1336">1336</a>
+<a href="#1337" id="1337">1337</a>
+<a href="#1338" id="1338">1338</a>
+<a href="#1339" id="1339">1339</a>
+<a href="#1340" id="1340">1340</a>
+<a href="#1341" id="1341">1341</a>
+<a href="#1342" id="1342">1342</a>
+<a href="#1343" id="1343">1343</a>
+<a href="#1344" id="1344">1344</a>
+<a href="#1345" id="1345">1345</a>
+<a href="#1346" id="1346">1346</a>
+<a href="#1347" id="1347">1347</a>
+<a href="#1348" id="1348">1348</a>
+<a href="#1349" id="1349">1349</a>
+<a href="#1350" id="1350">1350</a>
+<a href="#1351" id="1351">1351</a>
+<a href="#1352" id="1352">1352</a>
+<a href="#1353" id="1353">1353</a>
+<a href="#1354" id="1354">1354</a>
+<a href="#1355" id="1355">1355</a>
+<a href="#1356" id="1356">1356</a>
+<a href="#1357" id="1357">1357</a>
+<a href="#1358" id="1358">1358</a>
+<a href="#1359" id="1359">1359</a>
+<a href="#1360" id="1360">1360</a>
+<a href="#1361" id="1361">1361</a>
+<a href="#1362" id="1362">1362</a>
+<a href="#1363" id="1363">1363</a>
+<a href="#1364" id="1364">1364</a>
+<a href="#1365" id="1365">1365</a>
+<a href="#1366" id="1366">1366</a>
+<a href="#1367" id="1367">1367</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1374,9 +1419,9 @@
 <span class="kw">use </span>datatypes::arrow::row::{OwnedRow, RowConverter, SortField};
 <span class="kw">use </span>futures::{ready, Stream};
 <span class="kw">use </span>futures_util::StreamExt;
-<span class="kw">use </span>snafu::ResultExt;
+<span class="kw">use </span>snafu::{ensure, ResultExt};
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{DataFusionSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{DataFusionSnafu, RangeQuerySnafu, <span class="prelude-ty">Result</span>};
 
 <span class="kw">type </span>Millisecond = &lt;TimestampMillisecondType <span class="kw">as </span>ArrowPrimitiveType&gt;::Native;
 
@@ -1469,7 +1514,7 @@
 
 <span class="attr">#[derive(Eq, Clone, Debug)]
 </span><span class="kw">pub struct </span>RangeFn {
-    <span class="doccomment">/// with format like `max(a) 300s null`
+    <span class="doccomment">/// with format like `max(a) RANGE 300s FILL NULL`
     </span><span class="kw">pub </span>name: String,
     <span class="kw">pub </span>data_type: DataType,
     <span class="kw">pub </span>expr: Expr,
@@ -1519,6 +1564,7 @@
     <span class="doccomment">/// all range expressions
     </span><span class="kw">pub </span>range_expr: Vec&lt;RangeFn&gt;,
     <span class="kw">pub </span>align: Duration,
+    <span class="kw">pub </span>align_to: i64,
     <span class="kw">pub </span>time_index: String,
     <span class="kw">pub </span>by: Vec&lt;Expr&gt;,
     <span class="kw">pub </span>schema: DFSchemaRef,
@@ -1538,10 +1584,28 @@
         input: Arc&lt;LogicalPlan&gt;,
         range_expr: Vec&lt;RangeFn&gt;,
         align: Duration,
+        align_to: i64,
         time_index: Expr,
         by: Vec&lt;Expr&gt;,
         projection_expr: <span class="kw-2">&amp;</span>[Expr],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="macro">ensure!</span>(
+            align.as_millis() != <span class="number">0</span>,
+            RangeQuerySnafu {
+                msg: <span class="string">&quot;Can&#39;t use 0 as align in Range Query&quot;
+            </span>}
+        );
+        <span class="kw">for </span>expr <span class="kw">in </span><span class="kw-2">&amp;</span>range_expr {
+            <span class="macro">ensure!</span>(
+                expr.range.as_millis() != <span class="number">0</span>,
+                RangeQuerySnafu {
+                    msg: <span class="macro">format!</span>(
+                        <span class="string">&quot;Invalid Range expr `{}`, Can&#39;t use 0 as range in Range Query&quot;</span>,
+                        expr.name
+                    )
+                }
+            );
+        }
         <span class="kw">let </span><span class="kw-2">mut </span>fields = range_expr
             .iter()
             .map(
@@ -1611,6 +1675,7 @@
             input,
             range_expr,
             align,
+            align_to,
             time_index: time_index_name,
             schema,
             by_schema,
@@ -1644,13 +1709,19 @@
     <span class="kw">fn </span>fmt_for_explain(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter) -&gt; std::fmt::Result {
         <span class="macro">write!</span>(
             f,
-            <span class="string">&quot;RangeSelect: range_exprs=[{}], align={}s time_index={}&quot;</span>,
+            <span class="string">&quot;RangeSelect: range_exprs=[{}], align={}ms, align_to={}ms, align_by=[{}], time_index={}&quot;</span>,
             <span class="self">self</span>.range_expr
                 .iter()
                 .map(ToString::to_string)
                 .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
                 .join(<span class="string">&quot;, &quot;</span>),
-            <span class="self">self</span>.align.as_secs(),
+            <span class="self">self</span>.align.as_millis(),
+            <span class="self">self</span>.align_to,
+            <span class="self">self</span>.by
+                .iter()
+                .map(ToString::to_string)
+                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+                .join(<span class="string">&quot;, &quot;</span>),
             <span class="self">self</span>.time_index
         )
     }
@@ -1660,6 +1731,7 @@
 
         <span class="self">Self </span>{
             align: <span class="self">self</span>.align,
+            align_to: <span class="self">self</span>.align_to,
             range_expr: <span class="self">self</span>.range_expr.clone(),
             input: Arc::new(inputs[<span class="number">0</span>].clone()),
             time_index: <span class="self">self</span>.time_index.clone(),
@@ -1785,6 +1857,7 @@
             input: exec_input,
             range_exec,
             align: <span class="self">self</span>.align.as_millis() <span class="kw">as </span>Millisecond,
+            align_to: <span class="self">self</span>.align_to,
             by: <span class="self">self</span>.create_physical_expr_list(
                 <span class="kw-2">&amp;</span><span class="self">self</span>.by,
                 input_dfschema,
@@ -1815,6 +1888,7 @@
     input: Arc&lt;<span class="kw">dyn </span>ExecutionPlan&gt;,
     range_exec: Vec&lt;RangeFnExec&gt;,
     align: Millisecond,
+    align_to: i64,
     time_index: String,
     by: Vec&lt;Arc&lt;<span class="kw">dyn </span>PhysicalExpr&gt;&gt;,
     schema: SchemaRef,
@@ -1832,16 +1906,24 @@
                 <span class="kw">let </span>range_expr_strs: Vec&lt;String&gt; = <span class="self">self
                     </span>.range_exec
                     .iter()
-                    .map(|e| <span class="macro">format!</span>(<span class="string">&quot;RangeFnExec{{ {}, range: {:?}}}&quot;</span>, e.expr.name(), e.range))
+                    .map(|e| {
+                        <span class="macro">format!</span>(
+                            <span class="string">&quot;{} RANGE {}s FILL {}&quot;</span>,
+                            e.expr.name(),
+                            e.range / <span class="number">1000</span>,
+                            e.fill
+                        )
+                    })
                     .collect();
                 <span class="kw">let </span>by: Vec&lt;String&gt; = <span class="self">self</span>.by.iter().map(|e| e.to_string()).collect();
                 <span class="macro">write!</span>(
                     f,
-                    <span class="string">&quot;range_expr=[{}], align={}, time_index={}, by=[{}]&quot;</span>,
+                    <span class="string">&quot;range_expr=[{}], align={}ms, align_to={}ms, align_by=[{}], time_index={}&quot;</span>,
                     range_expr_strs.join(<span class="string">&quot;, &quot;</span>),
                     <span class="self">self</span>.align,
+                    <span class="self">self</span>.align_to,
+                    by.join(<span class="string">&quot;, &quot;</span>),
                     <span class="self">self</span>.time_index,
-                    by.join(<span class="string">&quot;, &quot;</span>)
                 )<span class="question-mark">?</span>;
             }
         }
@@ -1885,6 +1967,7 @@
             time_index: <span class="self">self</span>.time_index.clone(),
             by: <span class="self">self</span>.by.clone(),
             align: <span class="self">self</span>.align,
+            align_to: <span class="self">self</span>.align_to,
             schema: <span class="self">self</span>.schema.clone(),
             by_schema: <span class="self">self</span>.by_schema.clone(),
             metric: <span class="self">self</span>.metric.clone(),
@@ -1921,6 +2004,7 @@
             random_state: RandomState::new(),
             time_index,
             align: <span class="self">self</span>.align,
+            align_to: <span class="self">self</span>.align_to,
             by: <span class="self">self</span>.by.clone(),
             series_map: HashMap::new(),
             exec_state: ExecutionState::ReadingInput,
@@ -1951,6 +2035,7 @@
     </span>time_index: usize,
     <span class="doccomment">/// the unit of `align` is millisecond
     </span>align: Millisecond,
+    align_to: i64,
     by: Vec&lt;Arc&lt;<span class="kw">dyn </span>PhysicalExpr&gt;&gt;,
     exec_state: ExecutionState,
     <span class="doccomment">/// Converter for the by values
@@ -1979,11 +2064,13 @@
     </span>align_ts_accumulator: HashMap&lt;Millisecond, Vec&lt;Box&lt;<span class="kw">dyn </span>Accumulator&gt;&gt;&gt;,
 }
 
-<span class="doccomment">/// According to `align`, produces a calendar-based aligned time.
+<span class="doccomment">/// Use `align_to` as time origin.
+/// According to `align` as time interval, produces aligned time.
 /// Combining the parameters related to the range query,
 /// determine for each `Accumulator` `(hash, align_ts)` define,
 /// which rows of data will be applied to it.
-</span><span class="kw">fn </span>align_to_calendar(
+</span><span class="kw">fn </span>produce_align_time(
+    align_to: i64,
     range: Millisecond,
     align: Millisecond,
     ts_column: <span class="kw-2">&amp;</span>TimestampMillisecondArray,
@@ -1994,7 +2081,8 @@
     <span class="comment">// make modify_map for range_fn[i]
     </span><span class="kw">for </span>(row, hash) <span class="kw">in </span>by_columns_hash.iter().enumerate() {
         <span class="kw">let </span>ts = ts_column.value(row);
-        <span class="kw">let </span><span class="kw-2">mut </span>align_ts = ((ts + align - <span class="number">1</span>) / align) * align;
+        <span class="kw">let </span>ith_slot = (ts - align_to).div_ceil(align);
+        <span class="kw">let </span><span class="kw-2">mut </span>align_ts = ith_slot * align + align_to;
         <span class="kw">while </span>align_ts - range &lt; ts &amp;&amp; ts &lt;= align_ts {
             modify_map
                 .entry((<span class="kw-2">*</span>hash, align_ts))
@@ -2055,7 +2143,8 @@
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.range_exec.len() {
             <span class="kw">let </span>args = <span class="self">self</span>.evaluate_many(<span class="kw-2">&amp;</span>batch, <span class="kw-2">&amp;</span><span class="self">self</span>.range_exec[i].args)<span class="question-mark">?</span>;
             <span class="comment">// use self.modify_map record (hash, align_ts) =&gt; [row_nums]
-            </span>align_to_calendar(
+            </span>produce_align_time(
+                <span class="self">self</span>.align_to,
                 <span class="self">self</span>.range_exec[i].range,
                 <span class="self">self</span>.align,
                 ts_column_ref,
@@ -2387,6 +2476,7 @@
                 },
             ],
             align,
+            align_to: <span class="number">0</span>,
             by: <span class="macro">vec!</span>[Arc::new(Column::new(<span class="string">&quot;host&quot;</span>, <span class="number">2</span>))],
             time_index: TIME_INDEX_COLUMN.to_string(),
             schema: schema.clone(),
