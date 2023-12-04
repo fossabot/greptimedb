@@ -492,19 +492,19 @@
 ///
 /// - If a region is in an `operable` set, it will be granted an `flip_role(current)`([RegionRole]);
 /// otherwise, it will be granted a `current`([RegionRole]).
-/// - If a region is in a `closable` set, it won&#39;t be granted.
+/// - If a region is in a `closeable` set, it won&#39;t be granted.
 </span><span class="kw">fn </span>grant(
     granted_regions: <span class="kw-2">&amp;mut </span>Vec&lt;GrantedRegion&gt;,
     operable: <span class="kw-2">&amp;</span>HashSet&lt;RegionId&gt;,
-    closable: <span class="kw-2">&amp;</span>HashSet&lt;RegionId&gt;,
+    closeable: <span class="kw-2">&amp;</span>HashSet&lt;RegionId&gt;,
     regions: <span class="kw-2">&amp;</span>[RegionId],
     current: RegionRole,
 ) {
     <span class="kw">for </span>region <span class="kw">in </span>regions {
         <span class="kw">if </span>operable.contains(region) {
             granted_regions.push(GrantedRegion::new(<span class="kw-2">*</span>region, flip_role(current)));
-        } <span class="kw">else if </span>closable.contains(region) {
-            <span class="comment">// Filters out the closable regions.
+        } <span class="kw">else if </span>closeable.contains(region) {
+            <span class="comment">// Filters out the closeable regions.
         </span>} <span class="kw">else </span>{
             granted_regions.push(GrantedRegion::new(<span class="kw-2">*</span>region, current))
         }
@@ -543,7 +543,7 @@
 
         <span class="kw">let </span>leaders = leaders.into_iter().flatten().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-        <span class="kw">let </span>(downgradable, closable) = <span class="self">self
+        <span class="kw">let </span>(downgradable, closeable) = <span class="self">self
             </span>.region_lease_keeper
             .find_staled_leader_regions(cluster_id, datanode_id, <span class="kw-2">&amp;</span>leaders)
             .<span class="kw">await</span><span class="question-mark">?</span>;
@@ -551,44 +551,44 @@
         grant(
             <span class="kw-2">&amp;mut </span>granted_regions,
             <span class="kw-2">&amp;</span>downgradable,
-            <span class="kw-2">&amp;</span>closable,
+            <span class="kw-2">&amp;</span>closeable,
             <span class="kw-2">&amp;</span>leaders,
             RegionRole::Leader,
         );
-        <span class="kw">if </span>!closable.is_empty() {
+        <span class="kw">if </span>!closeable.is_empty() {
             <span class="macro">info!</span>(
-                <span class="string">&quot;Granting region lease, found closable leader regions: {:?} on datanode {}&quot;</span>,
-                closable, datanode_id
+                <span class="string">&quot;Granting region lease, found closeable leader regions: {:?} on datanode {}&quot;</span>,
+                closeable, datanode_id
             );
         }
-        inactive_regions.extend(closable);
+        inactive_regions.extend(closeable);
 
         <span class="kw">let </span>followers = followers.into_iter().flatten().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-        <span class="kw">let </span>(upgradeable, closable) = <span class="self">self
+        <span class="kw">let </span>(upgradeable, closeable) = <span class="self">self
             </span>.region_lease_keeper
             .find_staled_follower_regions(cluster_id, datanode_id, <span class="kw-2">&amp;</span>followers)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="comment">// If a region is opening, it will be filtered out from the closable regions set.
-        </span><span class="kw">let </span>closable = <span class="self">self
+        <span class="comment">// If a region is opening, it will be filtered out from the closeable regions set.
+        </span><span class="kw">let </span>closeable = <span class="self">self
             </span>.opening_region_keeper
-            .filter_opening_regions(datanode_id, closable);
+            .filter_opening_regions(datanode_id, closeable);
 
         grant(
             <span class="kw-2">&amp;mut </span>granted_regions,
             <span class="kw-2">&amp;</span>upgradeable,
-            <span class="kw-2">&amp;</span>closable,
+            <span class="kw-2">&amp;</span>closeable,
             <span class="kw-2">&amp;</span>followers,
             RegionRole::Follower,
         );
-        <span class="kw">if </span>!closable.is_empty() {
+        <span class="kw">if </span>!closeable.is_empty() {
             <span class="macro">info!</span>(
-                <span class="string">&quot;Granting region lease, found closable follower regions {:?} on datanode {}&quot;</span>,
-                closable, datanode_id
+                <span class="string">&quot;Granting region lease, found closeable follower regions {:?} on datanode {}&quot;</span>,
+                closeable, datanode_id
             );
         }
-        inactive_regions.extend(closable);
+        inactive_regions.extend(closeable);
 
         acc.inactive_region_ids = inactive_regions;
         acc.region_lease = <span class="prelude-val">Some</span>(RegionLease {

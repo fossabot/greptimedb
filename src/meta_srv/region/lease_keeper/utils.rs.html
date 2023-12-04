@@ -364,7 +364,7 @@
 <span class="doccomment">/// Returns Some(region_id) if it&#39;s not a leader region in `region_route`.
 ///
 /// It removes a leader region if its peer(`node_id`) isn&#39;t the corresponding leader peer in `region_routes`.
-</span><span class="kw">pub fn </span>closable_leader_region(
+</span><span class="kw">pub fn </span>closeable_leader_region(
     node_id: u64,
     region_id: RegionId,
     region_leader_map: <span class="kw-2">&amp;</span>HashMap&lt;RegionNumber, <span class="kw-2">&amp;</span>Peer&gt;,
@@ -403,12 +403,12 @@
     </span>}
 }
 
-<span class="doccomment">/// Returns upgradable regions, and closable regions.
+<span class="doccomment">/// Returns upgradable regions, and closeable regions.
 ///
 /// Upgradable regions:
 /// - Region&#39;s peer(`datanode_id`) is the corresponding leader peer in `region_routes`.
 ///
-/// Closable regions:
+/// closeable regions:
 /// - Region&#39;s peer(`datanode_id`) isn&#39;t the corresponding leader/follower peer in `region_routes`.
 </span><span class="kw">pub fn </span>find_staled_follower_regions(
     datanode_id: u64,
@@ -419,7 +419,7 @@
     <span class="kw">let </span>region_leader_status_map = convert_to_region_leader_status_map(region_routes);
     <span class="kw">let </span>region_peer_map = convert_to_region_peer_map(region_routes);
 
-    <span class="kw">let </span>(upgradable, closable): (HashSet&lt;<span class="prelude-ty">Option</span>&lt;RegionId&gt;&gt;, HashSet&lt;<span class="prelude-ty">Option</span>&lt;RegionId&gt;&gt;) =
+    <span class="kw">let </span>(upgradable, closeable): (HashSet&lt;<span class="prelude-ty">Option</span>&lt;RegionId&gt;&gt;, HashSet&lt;<span class="prelude-ty">Option</span>&lt;RegionId&gt;&gt;) =
         datanode_regions
             .iter()
             .map(|region_id| {
@@ -430,15 +430,15 @@
                         <span class="kw-2">&amp;</span>region_leader_map,
                         <span class="kw-2">&amp;</span>region_leader_status_map,
                     ),
-                    closable_region(datanode_id, <span class="kw-2">*</span>region_id, <span class="kw-2">&amp;</span>region_peer_map),
+                    closeable_region(datanode_id, <span class="kw-2">*</span>region_id, <span class="kw-2">&amp;</span>region_peer_map),
                 )
             })
             .unzip();
 
     <span class="kw">let </span>upgradable = upgradable.into_iter().flatten().collect();
-    <span class="kw">let </span>closable = closable.into_iter().flatten().collect();
+    <span class="kw">let </span>closeable = closeable.into_iter().flatten().collect();
 
-    (upgradable, closable)
+    (upgradable, closeable)
 }
 
 <span class="doccomment">/// Returns Some(region) if its peer(`node_id`) a leader region peer in `region_routes`.
@@ -464,7 +464,7 @@
 }
 
 <span class="doccomment">/// Returns Some(region) if its peer(`node_id) is&#39;t a leader or follower region peer in `region_routes`.
-</span><span class="kw">pub fn </span>closable_region(
+</span><span class="kw">pub fn </span>closeable_region(
     node_id: u64,
     region_id: RegionId,
     region_peer_map: <span class="kw-2">&amp;</span>HashMap&lt;RegionNumber, HashSet&lt;u64&gt;&gt;,
@@ -489,7 +489,7 @@
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_closable_leader_region() {
+    </span><span class="kw">fn </span>test_closeable_leader_region() {
         <span class="kw">let </span>datanode_id = <span class="number">1u64</span>;
         <span class="kw">let </span>region_number = <span class="number">1u32</span>;
         <span class="kw">let </span>region_id = RegionId::from_u64(region_number <span class="kw">as </span>u64);
@@ -500,19 +500,19 @@
         <span class="comment">// Should be None, `region_id` is an active region of `peer`.
         </span><span class="macro">assert_eq!</span>(
             <span class="prelude-val">None</span>,
-            closable_leader_region(datanode_id, region_id, <span class="kw-2">&amp;</span>region_leader_map,)
+            closeable_leader_region(datanode_id, region_id, <span class="kw-2">&amp;</span>region_leader_map,)
         );
 
         <span class="comment">// Should be Some(`region_id`), incorrect datanode_id.
         </span><span class="macro">assert_eq!</span>(
             <span class="prelude-val">Some</span>(region_id),
-            closable_leader_region(datanode_id + <span class="number">1</span>, region_id, <span class="kw-2">&amp;</span>region_leader_map,)
+            closeable_leader_region(datanode_id + <span class="number">1</span>, region_id, <span class="kw-2">&amp;</span>region_leader_map,)
         );
 
         <span class="comment">// Should be Some(`region_id`), the inactive_leader_regions is empty.
         </span><span class="macro">assert_eq!</span>(
             <span class="prelude-val">Some</span>(region_id),
-            closable_leader_region(datanode_id, region_id, <span class="kw-2">&amp;</span>Default::default(),)
+            closeable_leader_region(datanode_id, region_id, <span class="kw-2">&amp;</span>Default::default(),)
         );
 
         <span class="kw">let </span>another_peer = Peer::empty(datanode_id + <span class="number">1</span>);
@@ -521,7 +521,7 @@
         <span class="comment">// Should be Some(`region_id`), `region_id` is active region of `another_peer`.
         </span><span class="macro">assert_eq!</span>(
             <span class="prelude-val">Some</span>(region_id),
-            closable_leader_region(datanode_id, region_id, <span class="kw-2">&amp;</span>region_leader_map,)
+            closeable_leader_region(datanode_id, region_id, <span class="kw-2">&amp;</span>region_leader_map,)
         );
     }
 
@@ -581,31 +581,31 @@
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_closable_follower_region() {
+    </span><span class="kw">fn </span>test_closeable_follower_region() {
         <span class="kw">let </span>region_number = <span class="number">1u32</span>;
         <span class="kw">let </span>region_id = RegionId::from_u64(region_number <span class="kw">as </span>u64);
         <span class="kw">let </span>another_region_id = RegionId::from_u64(region_number <span class="kw">as </span>u64 + <span class="number">1</span>);
         <span class="kw">let </span>region_peer_map = [(region_number, HashSet::from([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]))].into();
 
         <span class="comment">// Should be None.
-        </span><span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, closable_region(<span class="number">1</span>, region_id, <span class="kw-2">&amp;</span>region_peer_map));
+        </span><span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, closeable_region(<span class="number">1</span>, region_id, <span class="kw-2">&amp;</span>region_peer_map));
 
         <span class="comment">// Should be Some(`region_id`), incorrect `datanode_id`.
         </span><span class="macro">assert_eq!</span>(
             <span class="prelude-val">Some</span>(region_id),
-            closable_region(<span class="number">4</span>, region_id, <span class="kw-2">&amp;</span>region_peer_map)
+            closeable_region(<span class="number">4</span>, region_id, <span class="kw-2">&amp;</span>region_peer_map)
         );
 
         <span class="comment">// Should be Some(`another_region_id`), `another_region_id` doesn&#39;t exist.
         </span><span class="macro">assert_eq!</span>(
             <span class="prelude-val">Some</span>(another_region_id),
-            closable_region(<span class="number">1</span>, another_region_id, <span class="kw-2">&amp;</span>region_peer_map)
+            closeable_region(<span class="number">1</span>, another_region_id, <span class="kw-2">&amp;</span>region_peer_map)
         );
 
         <span class="comment">// Should be Some(`another_region_id`), `another_region_id` doesn&#39;t exist, incorrect `datanode_id`.
         </span><span class="macro">assert_eq!</span>(
             <span class="prelude-val">Some</span>(another_region_id),
-            closable_region(<span class="number">4</span>, another_region_id, <span class="kw-2">&amp;</span>region_peer_map)
+            closeable_region(<span class="number">4</span>, another_region_id, <span class="kw-2">&amp;</span>region_peer_map)
         );
     }
 

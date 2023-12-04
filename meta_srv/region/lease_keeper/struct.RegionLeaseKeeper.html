@@ -11,14 +11,14 @@
     _cluster_id: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>,
     datanode_id: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>,
     datanode_regions: &amp;[<a class="struct" href="../../../store_api/storage/descriptors/struct.RegionId.html" title="struct store_api::storage::descriptors::RegionId">RegionId</a>]
-) -&gt; <a class="type" href="../../error/type.Result.html" title="type meta_srv::error::Result">Result</a>&lt;(<a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/set/struct.HashSet.html" title="struct std::collections::hash::set::HashSet">HashSet</a>&lt;<a class="struct" href="../../../store_api/storage/descriptors/struct.RegionId.html" title="struct store_api::storage::descriptors::RegionId">RegionId</a>&gt;, <a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/set/struct.HashSet.html" title="struct std::collections::hash::set::HashSet">HashSet</a>&lt;<a class="struct" href="../../../store_api/storage/descriptors/struct.RegionId.html" title="struct store_api::storage::descriptors::RegionId">RegionId</a>&gt;)&gt;</h4></section></summary><div class="docblock"><p>Returns downgradable regions, and closable regions.</p>
+) -&gt; <a class="type" href="../../error/type.Result.html" title="type meta_srv::error::Result">Result</a>&lt;(<a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/set/struct.HashSet.html" title="struct std::collections::hash::set::HashSet">HashSet</a>&lt;<a class="struct" href="../../../store_api/storage/descriptors/struct.RegionId.html" title="struct store_api::storage::descriptors::RegionId">RegionId</a>&gt;, <a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/set/struct.HashSet.html" title="struct std::collections::hash::set::HashSet">HashSet</a>&lt;<a class="struct" href="../../../store_api/storage/descriptors/struct.RegionId.html" title="struct store_api::storage::descriptors::RegionId">RegionId</a>&gt;)&gt;</h4></section></summary><div class="docblock"><p>Returns downgradable regions, and closeable regions.</p>
 <ul>
 <li>
 <p>Downgradable regions:
 Region’s peer(<code>datanode_id</code>) is the corresponding downgraded leader peer in <code>region_routes</code>.</p>
 </li>
 <li>
-<p>Closable regions:</p>
+<p>closeable regions:</p>
 </li>
 <li>
 <p>It returns a region if it’s peer(<code>datanode_id</code>) isn’t the corresponding leader peer in <code>region_routes</code>.</p>
@@ -36,12 +36,12 @@ Region’s peer(<code>datanode_id</code>) is the corresponding downgraded leader
     _cluster_id: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>,
     datanode_id: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>,
     datanode_regions: &amp;[<a class="struct" href="../../../store_api/storage/descriptors/struct.RegionId.html" title="struct store_api::storage::descriptors::RegionId">RegionId</a>]
-) -&gt; <a class="type" href="../../error/type.Result.html" title="type meta_srv::error::Result">Result</a>&lt;(<a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/set/struct.HashSet.html" title="struct std::collections::hash::set::HashSet">HashSet</a>&lt;<a class="struct" href="../../../store_api/storage/descriptors/struct.RegionId.html" title="struct store_api::storage::descriptors::RegionId">RegionId</a>&gt;, <a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/set/struct.HashSet.html" title="struct std::collections::hash::set::HashSet">HashSet</a>&lt;<a class="struct" href="../../../store_api/storage/descriptors/struct.RegionId.html" title="struct store_api::storage::descriptors::RegionId">RegionId</a>&gt;)&gt;</h4></section></summary><div class="docblock"><p>Returns upgradable regions, and closable regions.</p>
+) -&gt; <a class="type" href="../../error/type.Result.html" title="type meta_srv::error::Result">Result</a>&lt;(<a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/set/struct.HashSet.html" title="struct std::collections::hash::set::HashSet">HashSet</a>&lt;<a class="struct" href="../../../store_api/storage/descriptors/struct.RegionId.html" title="struct store_api::storage::descriptors::RegionId">RegionId</a>&gt;, <a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/set/struct.HashSet.html" title="struct std::collections::hash::set::HashSet">HashSet</a>&lt;<a class="struct" href="../../../store_api/storage/descriptors/struct.RegionId.html" title="struct store_api::storage::descriptors::RegionId">RegionId</a>&gt;)&gt;</h4></section></summary><div class="docblock"><p>Returns upgradable regions, and closeable regions.</p>
 <p>Upgradable regions:</p>
 <ul>
 <li>Region’s peer(<code>datanode_id</code>) is the corresponding leader peer in <code>region_routes</code>.</li>
 </ul>
-<p>Closable regions:</p>
+<p>closeable regions:</p>
 <ul>
 <li>Region’s peer(<code>datanode_id</code>) isn’t the corresponding leader/follower peer in <code>region_routes</code>.</li>
 <li>Region’s table metadata is not found.</li>

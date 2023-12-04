@@ -641,12 +641,12 @@
         <span class="prelude-val">Ok</span>(metadata_subset)
     }
 
-    <span class="doccomment">/// Returns downgradable regions, and closable regions.
+    <span class="doccomment">/// Returns downgradable regions, and closeable regions.
     ///
     /// - Downgradable regions:
     /// Region&#39;s peer(`datanode_id`) is the corresponding downgraded leader peer in `region_routes`.
     ///
-    /// - Closable regions:
+    /// - closeable regions:
     /// - It returns a region if it&#39;s peer(`datanode_id`) isn&#39;t the corresponding leader peer in `region_routes`.
     ///     - Expected as [RegionRole::Follower](store_api::region_engine::RegionRole::Follower) regions.
     ///     - Unexpected [RegionRole::Leader](store_api::region_engine::RegionRole::Leader) regions.
@@ -665,37 +665,37 @@
             <span class="self">self</span>.collect_tables_metadata(<span class="kw-2">&amp;</span>table_ids).<span class="kw">await</span><span class="question-mark">?
         </span>};
 
-        <span class="kw">let </span><span class="kw-2">mut </span>closable_set = HashSet::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>closeable_set = HashSet::new();
         <span class="kw">let </span><span class="kw-2">mut </span>downgradable_set = HashSet::new();
 
         <span class="kw">for </span>(table_id, regions) <span class="kw">in </span>tables {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(metadata) = metadata_subset.get(<span class="kw-2">&amp;</span>table_id) {
                 <span class="kw">let </span>region_routes = <span class="kw-2">&amp;</span>metadata.region_routes;
 
-                <span class="kw">let </span>(downgradable, closable) =
+                <span class="kw">let </span>(downgradable, closeable) =
                     find_staled_leader_regions(datanode_id, <span class="kw-2">&amp;</span>regions, region_routes);
 
                 downgradable_set.extend(downgradable);
-                closable_set.extend(closable);
+                closeable_set.extend(closeable);
             } <span class="kw">else </span>{
                 <span class="macro">warn!</span>(
-                    <span class="string">&quot;The table {} metadata is not found, appends closable leader regions: {:?}&quot;</span>,
+                    <span class="string">&quot;The table {} metadata is not found, appends closeable leader regions: {:?}&quot;</span>,
                     table_id, regions
                 );
                 <span class="comment">// If table metadata is not found.
-                </span>closable_set.extend(regions);
+                </span>closeable_set.extend(regions);
             }
         }
 
-        <span class="prelude-val">Ok</span>((downgradable_set, closable_set))
+        <span class="prelude-val">Ok</span>((downgradable_set, closeable_set))
     }
 
-    <span class="doccomment">/// Returns upgradable regions, and closable regions.
+    <span class="doccomment">/// Returns upgradable regions, and closeable regions.
     ///
     /// Upgradable regions:
     /// - Region&#39;s peer(`datanode_id`) is the corresponding leader peer in `region_routes`.
     ///
-    /// Closable regions:
+    /// closeable regions:
     /// - Region&#39;s peer(`datanode_id`) isn&#39;t the corresponding leader/follower peer in `region_routes`.
     /// - Region&#39;s table metadata is not found.
     </span><span class="kw">pub async fn </span>find_staled_follower_regions(
@@ -713,28 +713,28 @@
         </span>};
 
         <span class="kw">let </span><span class="kw-2">mut </span>upgradable_set = HashSet::new();
-        <span class="kw">let </span><span class="kw-2">mut </span>closable_set = HashSet::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>closeable_set = HashSet::new();
 
         <span class="kw">for </span>(table_id, regions) <span class="kw">in </span>tables {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(metadata) = metadata_subset.get(<span class="kw-2">&amp;</span>table_id) {
                 <span class="kw">let </span>region_routes = <span class="kw-2">&amp;</span>metadata.region_routes;
 
-                <span class="kw">let </span>(upgradable, closable) =
+                <span class="kw">let </span>(upgradable, closeable) =
                     find_staled_follower_regions(datanode_id, <span class="kw-2">&amp;</span>regions, region_routes);
 
                 upgradable_set.extend(upgradable);
-                closable_set.extend(closable);
+                closeable_set.extend(closeable);
             } <span class="kw">else </span>{
                 <span class="macro">warn!</span>(
-                    <span class="string">&quot;The table {} metadata is not found, appends closable followers regions: {:?}&quot;</span>,
+                    <span class="string">&quot;The table {} metadata is not found, appends closeable followers regions: {:?}&quot;</span>,
                     table_id, regions
                 );
                 <span class="comment">// If table metadata is not found.
-                </span>closable_set.extend(regions);
+                </span>closeable_set.extend(regions);
             }
         }
 
-        <span class="prelude-val">Ok</span>((upgradable_set, closable_set))
+        <span class="prelude-val">Ok</span>((upgradable_set, closeable_set))
     }
 
     <span class="attr">#[cfg(test)]
@@ -858,27 +858,27 @@
 
         <span class="kw">let </span>datanode_regions = <span class="macro">vec!</span>[region_id];
 
-        <span class="kw">let </span>(downgradable, closable) = keeper
+        <span class="kw">let </span>(downgradable, closeable) = keeper
             .find_staled_leader_regions(<span class="number">0</span>, datanode_id, <span class="kw-2">&amp;</span>datanode_regions)
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="macro">assert_eq!</span>(closable.len(), <span class="number">1</span>);
-        <span class="macro">assert!</span>(closable.contains(<span class="kw-2">&amp;</span>region_id));
+        <span class="macro">assert_eq!</span>(closeable.len(), <span class="number">1</span>);
+        <span class="macro">assert!</span>(closeable.contains(<span class="kw-2">&amp;</span>region_id));
         <span class="macro">assert!</span>(downgradable.is_empty());
 
-        <span class="kw">let </span>(upgradable, closable) = keeper
+        <span class="kw">let </span>(upgradable, closeable) = keeper
             .find_staled_follower_regions(<span class="number">0</span>, datanode_id, <span class="kw-2">&amp;</span>datanode_regions)
             .<span class="kw">await
             </span>.unwrap();
 
         <span class="macro">assert!</span>(upgradable.is_empty());
-        <span class="macro">assert_eq!</span>(closable.len(), <span class="number">1</span>);
-        <span class="macro">assert!</span>(closable.contains(<span class="kw-2">&amp;</span>region_id));
+        <span class="macro">assert_eq!</span>(closeable.len(), <span class="number">1</span>);
+        <span class="macro">assert!</span>(closeable.contains(<span class="kw-2">&amp;</span>region_id));
     }
 
     <span class="attr">#[tokio::test]
-    </span><span class="kw">async fn </span>test_find_closable_regions_simple() {
+    </span><span class="kw">async fn </span>test_find_closeable_regions_simple() {
         <span class="kw">let </span>datanode_id = <span class="number">1</span>;
         <span class="kw">let </span>region_number = <span class="number">1u32</span>;
         <span class="kw">let </span>table_id = <span class="number">10</span>;
@@ -900,31 +900,31 @@
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="comment">// `closable` should be empty.
+        <span class="comment">// `closeable` should be empty.
         </span><span class="kw">let </span>datanode_regions = <span class="macro">vec!</span>[region_id];
 
-        <span class="kw">let </span>(downgradable, closable) = keeper
+        <span class="kw">let </span>(downgradable, closeable) = keeper
             .find_staled_leader_regions(<span class="number">0</span>, datanode_id, <span class="kw-2">&amp;</span>datanode_regions)
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="macro">assert!</span>(closable.is_empty());
+        <span class="macro">assert!</span>(closeable.is_empty());
         <span class="macro">assert!</span>(downgradable.is_empty());
 
-        <span class="comment">// `closable` should be empty.
+        <span class="comment">// `closeable` should be empty.
         </span><span class="kw">let </span>datanode_regions = <span class="macro">vec!</span>[];
 
-        <span class="kw">let </span>(downgradable, closable) = keeper
+        <span class="kw">let </span>(downgradable, closeable) = keeper
             .find_staled_leader_regions(<span class="number">0</span>, datanode_id, <span class="kw-2">&amp;</span>datanode_regions)
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="macro">assert!</span>(closable.is_empty());
+        <span class="macro">assert!</span>(closeable.is_empty());
         <span class="macro">assert!</span>(downgradable.is_empty());
     }
 
     <span class="attr">#[tokio::test]
-    </span><span class="kw">async fn </span>test_find_closable_regions_2() {
+    </span><span class="kw">async fn </span>test_find_closeable_regions_2() {
         <span class="kw">let </span>datanode_id = <span class="number">1</span>;
         <span class="kw">let </span>region_number = <span class="number">1u32</span>;
         <span class="kw">let </span>table_id = <span class="number">10</span>;
@@ -961,29 +961,29 @@
             </span>.unwrap();
 
         <span class="comment">// Unexpected Leader region.
-        // `closable` should be vec![unknown_region_id].
+        // `closeable` should be vec![unknown_region_id].
         </span><span class="kw">let </span>datanode_regions = <span class="macro">vec!</span>[region_id, unknown_region_id];
 
-        <span class="kw">let </span>(downgradable, closable) = keeper
+        <span class="kw">let </span>(downgradable, closeable) = keeper
             .find_staled_leader_regions(<span class="number">0</span>, datanode_id, <span class="kw-2">&amp;</span>datanode_regions)
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="macro">assert_eq!</span>(closable.len(), <span class="number">1</span>);
-        <span class="macro">assert!</span>(closable.contains(<span class="kw-2">&amp;</span>unknown_region_id));
+        <span class="macro">assert_eq!</span>(closeable.len(), <span class="number">1</span>);
+        <span class="macro">assert!</span>(closeable.contains(<span class="kw-2">&amp;</span>unknown_region_id));
         <span class="macro">assert!</span>(downgradable.is_empty());
 
         <span class="comment">// Expected as Follower region.
-        // `closable` should be vec![another_region_id], because the `another_region_id` is a active region of `another_peer`.
+        // `closeable` should be vec![another_region_id], because the `another_region_id` is a active region of `another_peer`.
         </span><span class="kw">let </span>datanode_regions = <span class="macro">vec!</span>[another_region_id];
 
-        <span class="kw">let </span>(downgradable, closable) = keeper
+        <span class="kw">let </span>(downgradable, closeable) = keeper
             .find_staled_leader_regions(<span class="number">0</span>, datanode_id, <span class="kw-2">&amp;</span>datanode_regions)
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="macro">assert_eq!</span>(closable.len(), <span class="number">1</span>);
-        <span class="macro">assert!</span>(closable.contains(<span class="kw-2">&amp;</span>another_region_id));
+        <span class="macro">assert_eq!</span>(closeable.len(), <span class="number">1</span>);
+        <span class="macro">assert!</span>(closeable.contains(<span class="kw-2">&amp;</span>another_region_id));
         <span class="macro">assert!</span>(downgradable.is_empty());
     }
 
@@ -1010,16 +1010,16 @@
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="comment">// `upgradable` should be empty, `closable` should be empty.
+        <span class="comment">// `upgradable` should be empty, `closeable` should be empty.
         </span><span class="kw">let </span>datanode_regions = <span class="macro">vec!</span>[region_id, another_region_id];
 
-        <span class="kw">let </span>(downgradable, closable) = keeper
+        <span class="kw">let </span>(downgradable, closeable) = keeper
             .find_staled_leader_regions(<span class="number">0</span>, datanode_id, <span class="kw-2">&amp;</span>datanode_regions)
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="macro">assert_eq!</span>(closable.len(), <span class="number">1</span>);
-        <span class="macro">assert!</span>(closable.contains(<span class="kw-2">&amp;</span>another_region_id));
+        <span class="macro">assert_eq!</span>(closeable.len(), <span class="number">1</span>);
+        <span class="macro">assert!</span>(closeable.contains(<span class="kw-2">&amp;</span>another_region_id));
         <span class="macro">assert_eq!</span>(downgradable.len(), <span class="number">1</span>);
         <span class="macro">assert!</span>(downgradable.contains(<span class="kw-2">&amp;</span>region_id));
     }
@@ -1047,29 +1047,29 @@
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="comment">// `upgradable` should be vec![region_id], `closable` should be empty.
+        <span class="comment">// `upgradable` should be vec![region_id], `closeable` should be empty.
         </span><span class="kw">let </span>datanode_regions = <span class="macro">vec!</span>[region_id];
 
-        <span class="kw">let </span>(upgradable, closable) = keeper
+        <span class="kw">let </span>(upgradable, closeable) = keeper
             .find_staled_follower_regions(<span class="number">0</span>, datanode_id, <span class="kw-2">&amp;</span>datanode_regions)
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="macro">assert!</span>(closable.is_empty());
+        <span class="macro">assert!</span>(closeable.is_empty());
         <span class="macro">assert_eq!</span>(upgradable.len(), <span class="number">1</span>);
         <span class="macro">assert!</span>(upgradable.contains(<span class="kw-2">&amp;</span>region_id));
 
-        <span class="comment">// `upgradable` should be empty, `closable` should be vec![region_id].
+        <span class="comment">// `upgradable` should be empty, `closeable` should be vec![region_id].
         </span><span class="kw">let </span>datanode_regions = <span class="macro">vec!</span>[region_id];
 
-        <span class="kw">let </span>(upgradable, closable) = keeper
+        <span class="kw">let </span>(upgradable, closeable) = keeper
             .find_staled_follower_regions(<span class="number">0</span>, datanode_id + <span class="number">1</span>, <span class="kw-2">&amp;</span>datanode_regions)
             .<span class="kw">await
             </span>.unwrap();
 
         <span class="macro">assert!</span>(upgradable.is_empty());
-        <span class="macro">assert_eq!</span>(closable.len(), <span class="number">1</span>);
-        <span class="macro">assert!</span>(closable.contains(<span class="kw-2">&amp;</span>region_id));
+        <span class="macro">assert_eq!</span>(closeable.len(), <span class="number">1</span>);
+        <span class="macro">assert!</span>(closeable.contains(<span class="kw-2">&amp;</span>region_id));
     }
 
     <span class="attr">#[tokio::test]
@@ -1096,12 +1096,12 @@
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="kw">let </span>(upgradable, closable) = keeper
+        <span class="kw">let </span>(upgradable, closeable) = keeper
             .find_staled_follower_regions(<span class="number">0</span>, datanode_id, <span class="kw-2">&amp;</span>datanode_regions)
             .<span class="kw">await
             </span>.unwrap();
         <span class="macro">assert!</span>(upgradable.is_empty());
-        <span class="macro">assert!</span>(closable.is_empty());
+        <span class="macro">assert!</span>(closeable.is_empty());
     }
 
     <span class="attr">#[test]
