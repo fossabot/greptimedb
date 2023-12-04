@@ -442,6 +442,7 @@
 <a href="#442" id="442">442</a>
 <a href="#443" id="443">443</a>
 <a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -462,6 +463,7 @@
 
 <span class="kw">use </span>api::v1::meta::MailboxMessage;
 <span class="kw">use </span>common_meta::ddl::utils::region_storage_path;
+<span class="kw">use </span>common_meta::distributed_time_constants::MAILBOX_RTT_SECS;
 <span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply, OpenRegion, SimpleReply};
 <span class="kw">use </span>common_meta::RegionIdent;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -473,7 +475,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::procedure::region_migration::{Context, State};
 <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::Channel;
 
-<span class="kw">const </span>OPEN_CANDIDATE_REGION_TIMEOUT: Duration = Duration::from_secs(<span class="number">1</span>);
+<span class="kw">const </span>OPEN_CANDIDATE_REGION_TIMEOUT: Duration = Duration::from_secs(MAILBOX_RTT_SECS);
 
 <span class="attr">#[derive(Debug, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>OpenCandidateRegion;
@@ -596,7 +598,7 @@
                 } <span class="kw">else </span>{
                     error::RetryLaterSnafu {
                         reason: <span class="macro">format!</span>(
-                            <span class="string">&quot;Region {region_id} is not opened by Datanode {:?}, error: {error:?}&quot;</span>,
+                            <span class="string">&quot;Region {region_id} is not opened by datanode {:?}, error: {error:?}&quot;</span>,
                             candidate,
                         ),
                     }
@@ -605,7 +607,7 @@
             }
             <span class="prelude-val">Err</span>(error::Error::MailboxTimeout { .. }) =&gt; {
                 <span class="kw">let </span>reason = <span class="macro">format!</span>(
-                    <span class="string">&quot;Mailbox received timeout for open candidate region {region_id} on Datanode {:?}&quot;</span>, 
+                    <span class="string">&quot;Mailbox received timeout for open candidate region {region_id} on datanode {:?}&quot;</span>, 
                     candidate,
                 );
                 error::RetryLaterSnafu { reason }.fail()

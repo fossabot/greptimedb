@@ -534,7 +534,7 @@
 <span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>api::v1::meta::MailboxMessage;
-<span class="kw">use </span>common_meta::distributed_time_constants::REGION_LEASE_SECS;
+<span class="kw">use </span>common_meta::distributed_time_constants::{MAILBOX_RTT_SECS, REGION_LEASE_SECS};
 <span class="kw">use </span>common_meta::instruction::{
     DowngradeRegion, DowngradeRegionReply, Instruction, InstructionReply,
 };
@@ -549,7 +549,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::procedure::region_migration::{Context, State};
 <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::Channel;
 
-<span class="kw">const </span>DOWNGRADE_LEADER_REGION_TIMEOUT: Duration = Duration::from_secs(<span class="number">1</span>);
+<span class="kw">const </span>DOWNGRADE_LEADER_REGION_TIMEOUT: Duration = Duration::from_secs(MAILBOX_RTT_SECS);
 
 <span class="attr">#[derive(Debug, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>DowngradeLeaderRegion {
@@ -582,7 +582,7 @@
             tokio::time::sleep_until(<span class="kw-2">*</span>deadline).<span class="kw">await</span>;
         }
 
-        <span class="prelude-val">Ok</span>(Box::new(UpgradeCandidateRegion))
+        <span class="prelude-val">Ok</span>(Box::&lt;UpgradeCandidateRegion&gt;::default())
     }
 
     <span class="kw">fn </span>as_any(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any {
@@ -677,7 +677,7 @@
             }
             <span class="prelude-val">Err</span>(error::Error::MailboxTimeout { .. }) =&gt; {
                 <span class="kw">let </span>reason = <span class="macro">format!</span>(
-                    <span class="string">&quot;Mailbox received timeout for downgrade leader region {region_id} on Datanode {:?}&quot;</span>, 
+                    <span class="string">&quot;Mailbox received timeout for downgrade leader region {region_id} on datanode {:?}&quot;</span>, 
                     leader,
                 );
                 error::RetryLaterSnafu { reason }.fail()
