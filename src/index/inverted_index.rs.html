@@ -14,6 +14,10 @@
 <a href="#14" id="14">14</a>
 <a href="#15" id="15">15</a>
 <a href="#16" id="16">16</a>
+<a href="#17" id="17">17</a>
+<a href="#18" id="18">18</a>
+<a href="#19" id="19">19</a>
+<a href="#20" id="20">20</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -30,4 +34,8 @@
 
 </span><span class="kw">pub mod </span>error;
 <span class="kw">pub mod </span>format;
+<span class="kw">pub mod </span>search;
+
+<span class="kw">pub type </span>FstMap = fst::Map&lt;Vec&lt;u8&gt;&gt;;
+<span class="kw">pub type </span>Bytes = Vec&lt;u8&gt;;
 </code></pre></div></section></main></body></html>

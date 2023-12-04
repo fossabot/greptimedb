@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["error","format"]};
+window.SIDEBAR_ITEMS = {"mod":["error","format","search"],"type":["Bytes","FstMap"]};

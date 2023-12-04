@@ -411,7 +411,7 @@
         (<span class="self">self</span>.mem_cache.entry_count(), <span class="self">self</span>.mem_cache.weighted_size())
     }
 
-    <span class="doccomment">/// Invalidte all cache items which key starts with `prefix`.
+    <span class="doccomment">/// Invalidate all cache items which key starts with `prefix`.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>invalidate_entries_with_prefix(<span class="kw-2">&amp;</span><span class="self">self</span>, prefix: String) {
         <span class="comment">// Safety: always ok when building cache with `support_invalidation_closures`.
         </span><span class="self">self</span>.mem_cache
