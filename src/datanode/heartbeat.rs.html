@@ -393,6 +393,31 @@
 <a href="#393" id="393">393</a>
 <a href="#394" id="394">394</a>
 <a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -432,6 +457,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::config::DatanodeOptions;
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, MetaClientInitSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::event_listener::RegionServerEventReceiver;
+<span class="kw">use </span><span class="kw">crate</span>::metrics;
 <span class="kw">use </span><span class="kw">crate</span>::region_server::RegionServer;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>handler;
@@ -467,9 +493,9 @@
             opts.heartbeat.interval.as_millis() <span class="kw">as </span>u64,
         ));
         <span class="kw">let </span>resp_handler_executor = Arc::new(HandlerGroupExecutor::new(<span class="macro">vec!</span>[
+            region_alive_keeper.clone(),
             Arc::new(ParseMailboxMessageHandler),
             Arc::new(RegionHeartbeatResponseHandler::new(region_server.clone())),
-            region_alive_keeper.clone(),
         ]));
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
@@ -496,8 +522,10 @@
         quit_signal: Arc&lt;Notify&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;HeartbeatSender&gt; {
         <span class="kw">let </span>client_id = meta_client.id();
-
         <span class="kw">let </span>(tx, <span class="kw-2">mut </span>rx) = meta_client.heartbeat().<span class="kw">await</span>.context(MetaClientInitSnafu)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span><span class="kw-2">mut </span>last_received_lease = Instant::now();
+
         <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="kw">while let </span><span class="prelude-val">Some</span>(res) = <span class="kw">match </span>rx.message().<span class="kw">await </span>{
                 <span class="prelude-val">Ok</span>(m) =&gt; m,
@@ -508,6 +536,28 @@
             } {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(msg) = res.mailbox_message.as_ref() {
                     <span class="macro">info!</span>(<span class="string">&quot;Received mailbox message: {msg:?}, meta_client id: {client_id:?}&quot;</span>);
+                }
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(lease) = res.region_lease.as_ref() {
+                    metrics::LAST_RECEIVED_HEARTBEAT_ELAPSED
+                        .set(last_received_lease.elapsed().as_millis() <span class="kw">as </span>i64);
+                    <span class="comment">// Resets the timer.
+                    </span>last_received_lease = Instant::now();
+
+                    <span class="kw">let </span><span class="kw-2">mut </span>leader_region_lease_count = <span class="number">0</span>;
+                    <span class="kw">let </span><span class="kw-2">mut </span>follower_region_lease_count = <span class="number">0</span>;
+                    <span class="kw">for </span>lease <span class="kw">in </span><span class="kw-2">&amp;</span>lease.regions {
+                        <span class="kw">match </span>lease.role() {
+                            RegionRole::Leader =&gt; leader_region_lease_count += <span class="number">1</span>,
+                            RegionRole::Follower =&gt; follower_region_lease_count += <span class="number">1</span>,
+                        }
+                    }
+
+                    metrics::HEARTBEAT_REGION_LEASES
+                        .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;leader&quot;</span>])
+                        .set(leader_region_lease_count);
+                    metrics::HEARTBEAT_REGION_LEASES
+                        .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;follower&quot;</span>])
+                        .set(follower_region_lease_count);
                 }
                 <span class="kw">let </span>ctx = HeartbeatResponseHandlerContext::new(mailbox.clone(), res);
                 <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">Self</span>::handle_response(ctx, handler_executor.clone()).<span class="kw">await </span>{

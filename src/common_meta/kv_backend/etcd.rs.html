@@ -612,6 +612,12 @@
 <a href="#612" id="612">612</a>
 <a href="#613" id="613">613</a>
 <a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -682,7 +688,10 @@
     <span class="kw">async fn </span>do_multi_txn(<span class="kw-2">&amp;</span><span class="self">self</span>, txn_ops: Vec&lt;TxnOp&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;TxnResponse&gt;&gt; {
         <span class="kw">if </span>txn_ops.len() &lt; MAX_TXN_SIZE {
             <span class="comment">// fast path
-            </span><span class="kw">let </span>txn = Txn::new().and_then(txn_ops);
+            </span><span class="kw">let </span>_timer = METRIC_META_TXN_REQUEST
+                .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;etcd&quot;</span>, <span class="string">&quot;txn&quot;</span>])
+                .start_timer();
+            <span class="kw">let </span>txn = Txn::new().and_then(txn_ops);
             <span class="kw">let </span>txn_res = <span class="self">self
                 </span>.client
                 .kv_client()
@@ -695,6 +704,9 @@
         <span class="kw">let </span>txns = txn_ops
             .chunks(MAX_TXN_SIZE)
             .map(|part| <span class="kw">async move </span>{
+                <span class="kw">let </span>_timer = METRIC_META_TXN_REQUEST
+                    .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;etcd&quot;</span>, <span class="string">&quot;txn&quot;</span>])
+                    .start_timer();
                 <span class="kw">let </span>txn = Txn::new().and_then(part);
                 <span class="self">self</span>.client.kv_client().txn(txn).<span class="kw">await
             </span>})
