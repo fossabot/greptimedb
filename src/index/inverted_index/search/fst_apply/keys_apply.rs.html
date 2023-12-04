@@ -300,6 +300,9 @@
 <a href="#300" id="300">300</a>
 <a href="#301" id="301">301</a>
 <a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -585,7 +588,10 @@
             },
         })];
         <span class="kw">let </span>result = KeysFstApplier::try_from(predicates);
-        <span class="macro">assert!</span>(result.is_err());
+        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
+            result,
+            <span class="prelude-val">Err</span>(Error::KeysApplierWithoutInList { .. })
+        ));
     }
 
     <span class="attr">#[test]

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["fst_apply","predicate"]};
+window.SIDEBAR_ITEMS = {"mod":["fst_apply","fst_values_mapper","predicate"]};
