@@ -701,6 +701,16 @@
 <a href="#701" id="701">701</a>
 <a href="#702" id="702">702</a>
 <a href="#703" id="703">703</a>
+<a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -739,7 +749,7 @@
 <span class="kw">use </span>partition::partition::{PartitionBound, PartitionDef};
 <span class="kw">use </span>regex::Regex;
 <span class="kw">use </span>session::context::QueryContextRef;
-<span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
+<span class="kw">use </span>snafu::{ensure, IntoError, OptionExt, ResultExt};
 <span class="kw">use </span>sql::ast::Value <span class="kw">as </span>SqlValue;
 <span class="kw">use </span>sql::statements::alter::AlterTable;
 <span class="kw">use </span>sql::statements::create::{CreateExternalTable, CreateTable, Partitions};
@@ -871,8 +881,8 @@
     }
 
     <span class="attr">#[tracing::instrument(skip_all)]
-    </span><span class="kw">pub async fn </span>drop_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_name: TableName) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let </span>table = <span class="self">self
+    </span><span class="kw">pub async fn </span>drop_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_name: TableName, drop_if_exists: bool) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self
             </span>.catalog_manager
             .table(
                 <span class="kw-2">&amp;</span>table_name.catalog_name,
@@ -881,24 +891,32 @@
             )
             .<span class="kw">await
             </span>.context(CatalogSnafu)<span class="question-mark">?
-            </span>.with_context(|| TableNotFoundSnafu {
+        </span>{
+            <span class="kw">let </span>table_id = table.table_info().table_id();
+            <span class="self">self</span>.drop_table_procedure(<span class="kw-2">&amp;</span>table_name, table_id, drop_if_exists)
+                .<span class="kw">await</span><span class="question-mark">?</span>;
+
+            <span class="comment">// Invalidates local cache ASAP.
+            </span><span class="self">self</span>.cache_invalidator
+                .invalidate_table_id(<span class="kw-2">&amp;</span>Context::default(), table_id)
+                .<span class="kw">await
+                </span>.context(error::InvalidateTableCacheSnafu)<span class="question-mark">?</span>;
+
+            <span class="self">self</span>.cache_invalidator
+                .invalidate_table_name(<span class="kw-2">&amp;</span>Context::default(), table_name.clone())
+                .<span class="kw">await
+                </span>.context(error::InvalidateTableCacheSnafu)<span class="question-mark">?</span>;
+
+            <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
+        } <span class="kw">else if </span>drop_if_exists {
+            <span class="comment">// DROP TABLE IF EXISTS meets table not found - ignored
+            </span><span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Err</span>(TableNotFoundSnafu {
                 table_name: table_name.to_string(),
-            })<span class="question-mark">?</span>;
-        <span class="kw">let </span>table_id = table.table_info().table_id();
-        <span class="self">self</span>.drop_table_procedure(<span class="kw-2">&amp;</span>table_name, table_id).<span class="kw">await</span><span class="question-mark">?</span>;
-
-        <span class="comment">// Invalidates local cache ASAP.
-        </span><span class="self">self</span>.cache_invalidator
-            .invalidate_table_id(<span class="kw-2">&amp;</span>Context::default(), table_id)
-            .<span class="kw">await
-            </span>.context(error::InvalidateTableCacheSnafu)<span class="question-mark">?</span>;
-
-        <span class="self">self</span>.cache_invalidator
-            .invalidate_table_name(<span class="kw-2">&amp;</span>Context::default(), table_name.clone())
-            .<span class="kw">await
-            </span>.context(error::InvalidateTableCacheSnafu)<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
+            }
+            .into_error(snafu::NoneError))
+        }
     }
 
     <span class="attr">#[tracing::instrument(skip_all)]
@@ -1046,6 +1064,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         table_name: <span class="kw-2">&amp;</span>TableName,
         table_id: TableId,
+        drop_if_exists: bool,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;SubmitDdlTaskResponse&gt; {
         <span class="kw">let </span>request = SubmitDdlTaskRequest {
             task: DdlTask::new_drop_table(
@@ -1053,6 +1072,7 @@
                 table_name.schema_name.to_string(),
                 table_name.table_name.to_string(),
                 table_id,
+                drop_if_exists,
             ),
         };
 

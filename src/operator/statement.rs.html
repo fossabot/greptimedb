@@ -477,7 +477,7 @@
                         .map_err(BoxedError::new)
                         .context(error::ExternalSnafu)<span class="question-mark">?</span>;
                 <span class="kw">let </span>table_name = TableName::new(catalog, schema, table);
-                <span class="self">self</span>.drop_table(table_name).<span class="kw">await
+                <span class="self">self</span>.drop_table(table_name, stmt.drop_if_exists()).<span class="kw">await
             </span>}
             Statement::TruncateTable(stmt) =&gt; {
                 <span class="kw">let </span>(catalog, schema, table) =

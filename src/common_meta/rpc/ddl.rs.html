@@ -470,6 +470,12 @@
 <a href="#470" id="470">470</a>
 <a href="#471" id="471">471</a>
 <a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -526,12 +532,14 @@
         schema: String,
         table: String,
         table_id: TableId,
+        drop_if_exists: bool,
     ) -&gt; <span class="self">Self </span>{
         DdlTask::DropTable(DropTableTask {
             catalog,
             schema,
             table,
             table_id,
+            drop_if_exists,
         })
     }
 
@@ -590,6 +598,7 @@
                     schema_name: task.schema,
                     table_name: task.table,
                     table_id: <span class="prelude-val">Some</span>(api::v1::TableId { id: task.table_id }),
+                    drop_if_exists: task.drop_if_exists,
                 }),
             }),
             DdlTask::AlterTable(task) =&gt; Task::AlterTableTask(PbAlterTableTask {
@@ -648,6 +657,8 @@
     <span class="kw">pub </span>schema: String,
     <span class="kw">pub </span>table: String,
     <span class="kw">pub </span>table_id: TableId,
+    <span class="attr">#[serde(default)]
+    </span><span class="kw">pub </span>drop_if_exists: bool,
 }
 
 <span class="kw">impl </span>DropTableTask {
@@ -686,6 +697,7 @@
                     err_msg: <span class="string">&quot;expected table_id&quot;</span>,
                 })<span class="question-mark">?
                 </span>.id,
+            drop_if_exists: drop_table.drop_if_exists,
         })
     }
 }

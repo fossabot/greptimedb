@@ -90,6 +90,18 @@
 <a href="#90" id="90">90</a>
 <a href="#91" id="91">91</a>
 <a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -121,6 +133,7 @@
         }
         <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
 
+        <span class="kw">let </span>if_exists = <span class="self">self</span>.parser.parse_keywords(<span class="kw-2">&amp;</span>[Keyword::IF, Keyword::EXISTS]);
         <span class="kw">let </span>raw_table_ident =
             <span class="self">self</span>.parser
                 .parse_object_name()
@@ -137,7 +150,7 @@
             }
         );
 
-        <span class="prelude-val">Ok</span>(Statement::DropTable(DropTable::new(table_ident)))
+        <span class="prelude-val">Ok</span>(Statement::DropTable(DropTable::new(table_ident, if_exists)))
     }
 }
 
@@ -155,7 +168,15 @@
         <span class="kw">let </span><span class="kw-2">mut </span>stmts = result.unwrap();
         <span class="macro">assert_eq!</span>(
             stmts.pop().unwrap(),
-            Statement::DropTable(DropTable::new(ObjectName(<span class="macro">vec!</span>[Ident::new(<span class="string">&quot;foo&quot;</span>)])))
+            Statement::DropTable(DropTable::new(ObjectName(<span class="macro">vec!</span>[Ident::new(<span class="string">&quot;foo&quot;</span>)]), <span class="bool-val">false</span>))
+        );
+
+        <span class="kw">let </span>sql = <span class="string">&quot;DROP TABLE IF EXISTS foo&quot;</span>;
+        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {});
+        <span class="kw">let </span><span class="kw-2">mut </span>stmts = result.unwrap();
+        <span class="macro">assert_eq!</span>(
+            stmts.pop().unwrap(),
+            Statement::DropTable(DropTable::new(ObjectName(<span class="macro">vec!</span>[Ident::new(<span class="string">&quot;foo&quot;</span>)]), <span class="bool-val">true</span>))
         );
 
         <span class="kw">let </span>sql = <span class="string">&quot;DROP TABLE my_schema.foo&quot;</span>;
@@ -163,10 +184,10 @@
         <span class="kw">let </span><span class="kw-2">mut </span>stmts = result.unwrap();
         <span class="macro">assert_eq!</span>(
             stmts.pop().unwrap(),
-            Statement::DropTable(DropTable::new(ObjectName(<span class="macro">vec!</span>[
-                Ident::new(<span class="string">&quot;my_schema&quot;</span>),
-                Ident::new(<span class="string">&quot;foo&quot;</span>)
-            ])))
+            Statement::DropTable(DropTable::new(
+                ObjectName(<span class="macro">vec!</span>[Ident::new(<span class="string">&quot;my_schema&quot;</span>), Ident::new(<span class="string">&quot;foo&quot;</span>)]),
+                <span class="bool-val">false
+            </span>))
         );
 
         <span class="kw">let </span>sql = <span class="string">&quot;DROP TABLE my_catalog.my_schema.foo&quot;</span>;
@@ -174,11 +195,14 @@
         <span class="kw">let </span><span class="kw-2">mut </span>stmts = result.unwrap();
         <span class="macro">assert_eq!</span>(
             stmts.pop().unwrap(),
-            Statement::DropTable(DropTable::new(ObjectName(<span class="macro">vec!</span>[
-                Ident::new(<span class="string">&quot;my_catalog&quot;</span>),
-                Ident::new(<span class="string">&quot;my_schema&quot;</span>),
-                Ident::new(<span class="string">&quot;foo&quot;</span>)
-            ])))
+            Statement::DropTable(DropTable::new(
+                ObjectName(<span class="macro">vec!</span>[
+                    Ident::new(<span class="string">&quot;my_catalog&quot;</span>),
+                    Ident::new(<span class="string">&quot;my_schema&quot;</span>),
+                    Ident::new(<span class="string">&quot;foo&quot;</span>)
+                ]),
+                <span class="bool-val">false
+            </span>))
         )
     }
 }
