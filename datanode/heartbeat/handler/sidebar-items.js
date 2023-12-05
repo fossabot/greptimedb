@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["RegionHeartbeatResponseHandler"]};
+window.SIDEBAR_ITEMS = {"struct":["RegionHeartbeatResponseHandler"],"type":["InstructionHandler"]};

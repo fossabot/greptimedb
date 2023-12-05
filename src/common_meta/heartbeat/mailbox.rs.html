@@ -94,9 +94,9 @@
     <span class="kw">pub </span>from: String,
 }
 
-<span class="attr">#[cfg(test)]
-</span><span class="kw">impl </span>MessageMeta {
-    <span class="kw">pub fn </span>new_test(id: u64, subject: <span class="kw-2">&amp;</span>str, to: <span class="kw-2">&amp;</span>str, from: <span class="kw-2">&amp;</span>str) -&gt; <span class="self">Self </span>{
+<span class="kw">impl </span>MessageMeta {
+    <span class="attr">#[cfg(any(test, feature = <span class="string">&quot;testing&quot;</span>))]
+    </span><span class="kw">pub fn </span>new_test(id: u64, subject: <span class="kw-2">&amp;</span>str, to: <span class="kw-2">&amp;</span>str, from: <span class="kw-2">&amp;</span>str) -&gt; <span class="self">Self </span>{
         MessageMeta {
             id,
             subject: subject.to_string(),
