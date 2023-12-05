@@ -3,7 +3,7 @@
 "auth":[["impl ErrorCompat for <a class=\"enum\" href=\"auth/error/enum.Error.html\" title=\"enum auth::error::Error\">Error</a>"]],
 "catalog":[["impl ErrorCompat for <a class=\"enum\" href=\"catalog/error/enum.Error.html\" title=\"enum catalog::error::Error\">Error</a>"]],
 "client":[["impl ErrorCompat for <a class=\"enum\" href=\"client/error/enum.Error.html\" title=\"enum client::error::Error\">Error</a>"]],
-"cmd":[["impl ErrorCompat for <a class=\"enum\" href=\"cmd/error/enum.Error.html\" title=\"enum cmd::error::Error\">Error</a>"],["impl ErrorCompat for <a class=\"enum\" href=\"cmd/cli/upgrade/v1_helper/err/enum.Error.html\" title=\"enum cmd::cli::upgrade::v1_helper::err::Error\">Error</a>"]],
+"cmd":[["impl ErrorCompat for <a class=\"enum\" href=\"cmd/cli/upgrade/v1_helper/err/enum.Error.html\" title=\"enum cmd::cli::upgrade::v1_helper::err::Error\">Error</a>"],["impl ErrorCompat for <a class=\"enum\" href=\"cmd/error/enum.Error.html\" title=\"enum cmd::error::Error\">Error</a>"]],
 "common_base":[["impl ErrorCompat for <a class=\"enum\" href=\"common_base/buffer/enum.Error.html\" title=\"enum common_base::buffer::Error\">Error</a>"]],
 "common_catalog":[["impl ErrorCompat for <a class=\"enum\" href=\"common_catalog/error/enum.Error.html\" title=\"enum common_catalog::error::Error\">Error</a>"]],
 "common_datasource":[["impl ErrorCompat for <a class=\"enum\" href=\"common_datasource/error/enum.Error.html\" title=\"enum common_datasource::error::Error\">Error</a>"]],
@@ -36,7 +36,7 @@
 "script":[["impl ErrorCompat for <a class=\"enum\" href=\"script/python/error/enum.Error.html\" title=\"enum script::python::error::Error\">Error</a>"],["impl ErrorCompat for <a class=\"enum\" href=\"script/error/enum.Error.html\" title=\"enum script::error::Error\">Error</a>"]],
 "servers":[["impl ErrorCompat for <a class=\"enum\" href=\"servers/error/enum.Error.html\" title=\"enum servers::error::Error\">Error</a>"]],
 "sql":[["impl ErrorCompat for <a class=\"enum\" href=\"sql/error/enum.Error.html\" title=\"enum sql::error::Error\">Error</a>"]],
-"store_api":[["impl ErrorCompat for <a class=\"enum\" href=\"store_api/metadata/enum.MetadataError.html\" title=\"enum store_api::metadata::MetadataError\">MetadataError</a>"],["impl ErrorCompat for <a class=\"enum\" href=\"store_api/error/enum.Error.html\" title=\"enum store_api::error::Error\">Error</a>"]],
+"store_api":[["impl ErrorCompat for <a class=\"enum\" href=\"store_api/error/enum.Error.html\" title=\"enum store_api::error::Error\">Error</a>"],["impl ErrorCompat for <a class=\"enum\" href=\"store_api/metadata/enum.MetadataError.html\" title=\"enum store_api::metadata::MetadataError\">MetadataError</a>"]],
 "substrait":[["impl ErrorCompat for <a class=\"enum\" href=\"substrait/error/enum.Error.html\" title=\"enum substrait::error::Error\">Error</a>"]],
 "table":[["impl ErrorCompat for <a class=\"enum\" href=\"table/error/enum.Error.html\" title=\"enum table::error::Error\">Error</a>"]]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

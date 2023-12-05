@@ -67,7 +67,7 @@
 <span class="doccomment">/// InvertedIndexReader defines an asynchronous reader of inverted index data
 </span><span class="attr">#[mockall::automock]
 #[async_trait]
-</span><span class="kw">pub trait </span>InvertedIndexReader {
+</span><span class="kw">pub trait </span>InvertedIndexReader: Send {
     <span class="doccomment">/// Retrieve metadata of all inverted indices stored within the blob.
     </span><span class="kw">async fn </span>metadata(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;InvertedIndexMetas&gt;;
 
