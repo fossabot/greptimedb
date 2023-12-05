@@ -355,6 +355,7 @@
 <a href="#355" id="355">355</a>
 <a href="#356" id="356">356</a>
 <a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -627,7 +628,8 @@
             Arc::new(handlers_executor),
         );
 
-        <span class="kw">let </span>instance = FrontendBuilder::new(meta_backend, datanode_clients, meta_client)
+        <span class="kw">let </span>instance = FrontendBuilder::new(meta_backend.clone(), datanode_clients, meta_client)
+            .with_cache_invalidator(meta_backend)
             .with_heartbeat_task(heartbeat_task)
             .try_build()
             .<span class="kw">await
