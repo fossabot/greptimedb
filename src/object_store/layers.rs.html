@@ -16,6 +16,8 @@
 <a href="#16" id="16">16</a>
 <a href="#17" id="17">17</a>
 <a href="#18" id="18">18</a>
+<a href="#19" id="19">19</a>
+<a href="#20" id="20">20</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -31,7 +33,9 @@
 // limitations under the License.
 
 </span><span class="kw">mod </span>lru_cache;
+<span class="kw">mod </span>prometheus;
 
 <span class="kw">pub use </span>lru_cache::<span class="kw-2">*</span>;
 <span class="kw">pub use </span>opendal::layers::<span class="kw-2">*</span>;
+<span class="kw">pub use </span>prometheus::PrometheusMetricsLayer;
 </code></pre></div></section></main></body></html>
