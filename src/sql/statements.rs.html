@@ -931,6 +931,31 @@
 <a href="#931" id="931">931</a>
 <a href="#932" id="932">932</a>
 <a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1316,13 +1341,23 @@
         .context(ConvertToGrpcDataTypeSnafu)<span class="question-mark">?
         </span>.to_parts();
 
+    <span class="kw">let </span>is_primary_key = col
+        .options
+        .iter()
+        .any(|o| <span class="macro">matches!</span>(o.option, ColumnOption::Unique { is_primary: <span class="bool-val">true </span>}));
+
+    <span class="kw">let </span>semantic_type = <span class="kw">if </span>is_primary_key {
+        SemanticType::Tag
+    } <span class="kw">else </span>{
+        SemanticType::Field
+    };
+
     <span class="prelude-val">Ok</span>(api::v1::ColumnDef {
         name,
         data_type: datatype <span class="kw">as </span>i32,
         is_nullable,
         default_constraint: default_constraint.unwrap_or_default(),
-        <span class="comment">// TODO(#1308): support adding new primary key columns
-        </span>semantic_type: SemanticType::Field <span class="kw">as _</span>,
+        semantic_type: semantic_type <span class="kw">as _</span>,
         comment: String::new(),
         datatype_extension: datatype_ext,
     })
@@ -1759,6 +1794,7 @@
         <span class="macro">assert!</span>(grpc_column_def.is_nullable); <span class="comment">// nullable when options are empty
         </span><span class="macro">assert_eq!</span>(ColumnDataType::Float64 <span class="kw">as </span>i32, grpc_column_def.data_type);
         <span class="macro">assert!</span>(grpc_column_def.default_constraint.is_empty());
+        <span class="macro">assert_eq!</span>(grpc_column_def.semantic_type, SemanticType::Field <span class="kw">as </span>i32);
 
         <span class="comment">// test not null
         </span><span class="kw">let </span>column_def = ColumnDef {
@@ -1773,6 +1809,20 @@
 
         <span class="kw">let </span>grpc_column_def = sql_column_def_to_grpc_column_def(<span class="kw-2">&amp;</span>column_def).unwrap();
         <span class="macro">assert!</span>(!grpc_column_def.is_nullable);
+
+        <span class="comment">// test primary key
+        </span><span class="kw">let </span>column_def = ColumnDef {
+            name: <span class="string">&quot;col&quot;</span>.into(),
+            data_type: SqlDataType::Double,
+            collation: <span class="prelude-val">None</span>,
+            options: <span class="macro">vec!</span>[ColumnOptionDef {
+                name: <span class="prelude-val">None</span>,
+                option: ColumnOption::Unique { is_primary: <span class="bool-val">true </span>},
+            }],
+        };
+
+        <span class="kw">let </span>grpc_column_def = sql_column_def_to_grpc_column_def(<span class="kw-2">&amp;</span>column_def).unwrap();
+        <span class="macro">assert_eq!</span>(grpc_column_def.semantic_type, SemanticType::Tag <span class="kw">as </span>i32);
     }
 
     <span class="attr">#[test]
