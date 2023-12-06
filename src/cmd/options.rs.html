@@ -502,7 +502,7 @@
                 .unwrap();
 
                 <span class="comment">// Check the configs from environment variables.
-                </span><span class="kw">match </span>opts.storage.store {
+                </span><span class="kw">match </span><span class="kw-2">&amp;</span>opts.storage.store {
                     ObjectStoreConfig::S3(s3_config) =&gt; {
                         <span class="macro">assert_eq!</span>(s3_config.bucket, <span class="string">&quot;mybucket&quot;</span>.to_string());
                     }

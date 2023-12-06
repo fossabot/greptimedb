@@ -573,6 +573,14 @@
 <a href="#573" id="573">573</a>
 <a href="#574" id="574">574</a>
 <a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -929,7 +937,6 @@
                 ));
             }
         }
-
         <span class="macro">info!</span>(<span class="string">&quot;going to open {} regions&quot;</span>, regions.len());
         <span class="kw">let </span>semaphore = Arc::new(tokio::sync::Semaphore::new(OPEN_REGION_PARALLELISM));
         <span class="kw">let </span><span class="kw-2">mut </span>tasks = <span class="macro">vec!</span>[];
@@ -992,7 +999,6 @@
         );
 
         <span class="kw">let </span>table_provider_factory = Arc::new(DummyTableProviderFactory);
-
         <span class="kw">let </span><span class="kw-2">mut </span>region_server = RegionServer::with_table_provider(
             query_engine,
             runtime,
@@ -1000,13 +1006,8 @@
             table_provider_factory,
         );
 
-        <span class="kw">let </span>object_store = store::new_object_store(opts).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let </span>object_store_manager = ObjectStoreManager::new(
-            <span class="string">&quot;default&quot;</span>, <span class="comment">// TODO: use a name which is set in the configuration when #919 is done.
-            </span>object_store,
-        );
-        <span class="kw">let </span>engines =
-            <span class="self">Self</span>::build_store_engines(opts, log_store, Arc::new(object_store_manager)).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>object_store_manager = <span class="self">Self</span>::build_object_store_manager(opts).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>engines = <span class="self">Self</span>::build_store_engines(opts, log_store, object_store_manager).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">for </span>engine <span class="kw">in </span>engines {
             region_server.register_engine(engine);
         }
@@ -1070,6 +1071,21 @@
             }
         }
         <span class="prelude-val">Ok</span>(engines)
+    }
+
+    <span class="doccomment">/// Builds [ObjectStoreManager]
+    </span><span class="kw">async fn </span>build_object_store_manager(opts: <span class="kw-2">&amp;</span>DatanodeOptions) -&gt; <span class="prelude-ty">Result</span>&lt;ObjectStoreManagerRef&gt; {
+        <span class="kw">let </span>object_store =
+            store::new_object_store(opts.storage.store.clone(), <span class="kw-2">&amp;</span>opts.storage.data_home).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>default_name = opts.storage.store.name();
+        <span class="kw">let </span><span class="kw-2">mut </span>object_store_manager = ObjectStoreManager::new(default_name, object_store);
+        <span class="kw">for </span>store <span class="kw">in </span><span class="kw-2">&amp;</span>opts.storage.providers {
+            object_store_manager.add(
+                store.name(),
+                store::new_object_store(store.clone(), <span class="kw-2">&amp;</span>opts.storage.data_home).<span class="kw">await</span><span class="question-mark">?</span>,
+            );
+        }
+        <span class="prelude-val">Ok</span>(Arc::new(object_store_manager))
     }
 }
 

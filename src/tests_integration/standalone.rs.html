@@ -134,6 +134,18 @@
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -176,7 +188,8 @@
 
 <span class="kw">pub struct </span>GreptimeDbStandaloneBuilder {
     instance_name: String,
-    store_type: <span class="prelude-ty">Option</span>&lt;StorageType&gt;,
+    store_providers: <span class="prelude-ty">Option</span>&lt;Vec&lt;StorageType&gt;&gt;,
+    default_store: <span class="prelude-ty">Option</span>&lt;StorageType&gt;,
     plugin: <span class="prelude-ty">Option</span>&lt;Plugins&gt;,
 }
 
@@ -184,14 +197,23 @@
     <span class="kw">pub fn </span>new(instance_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             instance_name: instance_name.to_string(),
-            store_type: <span class="prelude-val">None</span>,
+            store_providers: <span class="prelude-val">None</span>,
             plugin: <span class="prelude-val">None</span>,
+            default_store: <span class="prelude-val">None</span>,
         }
     }
 
-    <span class="kw">pub fn </span>with_store_type(<span class="self">self</span>, store_type: StorageType) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>with_default_store_type(<span class="self">self</span>, store_type: StorageType) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            store_type: <span class="prelude-val">Some</span>(store_type),
+            default_store: <span class="prelude-val">Some</span>(store_type),
+            ..<span class="self">self
+        </span>}
+    }
+
+    <span class="attr">#[cfg(test)]
+    </span><span class="kw">pub fn </span>with_store_providers(<span class="self">self</span>, store_providers: Vec&lt;StorageType&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            store_providers: <span class="prelude-val">Some</span>(store_providers),
             ..<span class="self">self
         </span>}
     }
@@ -205,9 +227,11 @@
     }
 
     <span class="kw">pub async fn </span>build(<span class="self">self</span>) -&gt; GreptimeDbStandalone {
-        <span class="kw">let </span>store_type = <span class="self">self</span>.store_type.unwrap_or(StorageType::File);
+        <span class="kw">let </span>default_store_type = <span class="self">self</span>.default_store.unwrap_or(StorageType::File);
+        <span class="kw">let </span>store_types = <span class="self">self</span>.store_providers.unwrap_or_default();
 
-        <span class="kw">let </span>(opts, guard) = create_tmp_dir_and_datanode_opts(store_type, <span class="kw-2">&amp;</span><span class="self">self</span>.instance_name);
+        <span class="kw">let </span>(opts, guard) =
+            create_tmp_dir_and_datanode_opts(default_store_type, store_types, <span class="kw-2">&amp;</span><span class="self">self</span>.instance_name);
 
         <span class="kw">let </span>procedure_config = ProcedureConfig::default();
         <span class="kw">let </span>kv_backend_config = KvBackendConfig::default();

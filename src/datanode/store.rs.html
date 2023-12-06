@@ -178,6 +178,8 @@
 <a href="#178" id="178">178</a>
 <a href="#179" id="179">179</a>
 <a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -212,12 +214,15 @@
 <span class="kw">use </span>object_store::{util, HttpClient, ObjectStore, ObjectStoreBuilder};
 <span class="kw">use </span>snafu::prelude::<span class="kw-2">*</span>;
 
-<span class="kw">use </span><span class="kw">crate</span>::config::{DatanodeOptions, ObjectStoreConfig, DEFAULT_OBJECT_STORE_CACHE_SIZE};
+<span class="kw">use </span><span class="kw">crate</span>::config::{ObjectStoreConfig, DEFAULT_OBJECT_STORE_CACHE_SIZE};
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>new_object_store(opts: <span class="kw-2">&amp;</span>DatanodeOptions) -&gt; <span class="prelude-ty">Result</span>&lt;ObjectStore&gt; {
-    <span class="kw">let </span>data_home = normalize_dir(<span class="kw-2">&amp;</span>opts.storage.data_home);
-    <span class="kw">let </span>object_store = <span class="kw">match </span><span class="kw-2">&amp;</span>opts.storage.store {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>new_object_store(
+    store: ObjectStoreConfig,
+    data_home: <span class="kw-2">&amp;</span>str,
+) -&gt; <span class="prelude-ty">Result</span>&lt;ObjectStore&gt; {
+    <span class="kw">let </span>data_home = normalize_dir(data_home);
+    <span class="kw">let </span>object_store = <span class="kw">match </span><span class="kw-2">&amp;</span>store {
         ObjectStoreConfig::File(file_config) =&gt; {
             fs::new_fs_object_store(<span class="kw-2">&amp;</span>data_home, file_config).<span class="kw">await
         </span>}
@@ -230,9 +235,8 @@
     }<span class="question-mark">?</span>;
 
     <span class="comment">// Enable retry layer and cache layer for non-fs object storages
-    </span><span class="kw">let </span>object_store = <span class="kw">if </span>!<span class="macro">matches!</span>(opts.storage.store, ObjectStoreConfig::File(..)) {
-        <span class="kw">let </span>object_store =
-            create_object_store_with_cache(object_store, <span class="kw-2">&amp;</span>opts.storage.store).<span class="kw">await</span><span class="question-mark">?</span>;
+    </span><span class="kw">let </span>object_store = <span class="kw">if </span>!<span class="macro">matches!</span>(store, ObjectStoreConfig::File(..)) {
+        <span class="kw">let </span>object_store = create_object_store_with_cache(object_store, <span class="kw-2">&amp;</span>store).<span class="kw">await</span><span class="question-mark">?</span>;
         object_store.layer(RetryLayer::new().with_jitter())
     } <span class="kw">else </span>{
         object_store
