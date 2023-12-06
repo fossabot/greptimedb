@@ -661,7 +661,7 @@
         <span class="kw">let </span>table_ids = tables.keys().copied().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
         <span class="kw">let </span>metadata_subset = {
-            <span class="kw">let </span>_timer = metrics::METRIC_META_LOAD_LEADER_METADATA.start_timer();
+            <span class="kw">let </span>_timer = metrics::METRIC_META_LOAD_LEADER_METADATA_ELAPSED.start_timer();
             <span class="self">self</span>.collect_tables_metadata(<span class="kw-2">&amp;</span>table_ids).<span class="kw">await</span><span class="question-mark">?
         </span>};
 
@@ -708,7 +708,7 @@
         <span class="kw">let </span>table_ids = tables.keys().copied().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
         <span class="kw">let </span>metadata_subset = {
-            <span class="kw">let </span>_timer = metrics::METRIC_META_LOAD_FOLLOWER_METADATA.start_timer();
+            <span class="kw">let </span>_timer = metrics::METRIC_META_LOAD_FOLLOWER_METADATA_ELAPSED.start_timer();
             <span class="self">self</span>.collect_tables_metadata(<span class="kw-2">&amp;</span>table_ids).<span class="kw">await</span><span class="question-mark">?
         </span>};
 

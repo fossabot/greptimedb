@@ -50,6 +50,14 @@
 <a href="#50" id="50">50</a>
 <a href="#51" id="51">51</a>
 <a href="#52" id="52">52</a>
+<a href="#53" id="53">53</a>
+<a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -68,38 +76,46 @@
 <span class="kw">use </span>prometheus::<span class="kw-2">*</span>;
 
 <span class="macro">lazy_static! </span>{
-    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_KV_REQUEST: HistogramVec = <span class="macro">register_histogram_vec!</span>(
-        <span class="string">&quot;meta_kv_request&quot;</span>,
+    <span class="doccomment">/// Elapsed time to responding kv requests.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_KV_REQUEST_ELAPSED: HistogramVec = <span class="macro">register_histogram_vec!</span>(
+        <span class="string">&quot;meta_kv_request_elapsed&quot;</span>,
         <span class="string">&quot;meta kv request&quot;</span>,
         <span class="kw-2">&amp;</span>[<span class="string">&quot;target&quot;</span>, <span class="string">&quot;op&quot;</span>, <span class="string">&quot;cluster_id&quot;</span>]
     )
     .unwrap();
-    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_HEARTBEAT_CONNECTION_NUM: IntGauge = <span class="macro">register_int_gauge!</span>(
+    <span class="doccomment">/// The heartbeat connection gauge.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_HEARTBEAT_CONNECTION_NUM: IntGauge = <span class="macro">register_int_gauge!</span>(
         <span class="string">&quot;meta_heartbeat_connection_num&quot;</span>,
         <span class="string">&quot;meta heartbeat connection num&quot;
     </span>)
     .unwrap();
-    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_HANDLER_EXECUTE: HistogramVec =
+    <span class="doccomment">/// Elapsed time to execution of heartbeat handlers.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_HANDLER_EXECUTE: HistogramVec =
         <span class="macro">register_histogram_vec!</span>(<span class="string">&quot;meta_handler_execute&quot;</span>, <span class="string">&quot;meta handler execute&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;name&quot;</span>]).unwrap();
-    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_INACTIVE_REGIONS: IntGauge =
+    <span class="doccomment">/// Inactive region gauge.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_INACTIVE_REGIONS: IntGauge =
         <span class="macro">register_int_gauge!</span>(<span class="string">&quot;meta_inactive_regions&quot;</span>, <span class="string">&quot;meta inactive regions&quot;</span>).unwrap();
-    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_LEADER_CACHED_KV_LOAD: HistogramVec =
+    <span class="doccomment">/// Elapsed time to leader cache kv.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_LEADER_CACHED_KV_LOAD_ELAPSED: HistogramVec =
         <span class="macro">register_histogram_vec!</span>(<span class="string">&quot;meta_leader_cache_kv_load&quot;</span>, <span class="string">&quot;meta load cache&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;prefix&quot;</span>])
             .unwrap();
-    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_LOAD_FOLLOWER_METADATA: Histogram = <span class="macro">register_histogram!</span>(
-        <span class="string">&quot;meta_load_follower_metadata&quot;</span>,
+    <span class="doccomment">/// Elapsed time to load follower region metadata.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_LOAD_FOLLOWER_METADATA_ELAPSED: Histogram = <span class="macro">register_histogram!</span>(
+        <span class="string">&quot;meta_load_follower_metadata_elapsed&quot;</span>,
         <span class="string">&quot;meta load follower regions metadata elapsed&quot;
     </span>)
     .unwrap();
-    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_LOAD_LEADER_METADATA: Histogram = <span class="macro">register_histogram!</span>(
-        <span class="string">&quot;meta_load_leader_metadata&quot;</span>,
+    <span class="doccomment">/// Elapsed time to load leader region metadata.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_LOAD_LEADER_METADATA_ELAPSED: Histogram = <span class="macro">register_histogram!</span>(
+        <span class="string">&quot;meta_load_leader_metadata_elapsed&quot;</span>,
         <span class="string">&quot;meta load leader regions metadata elapsed&quot;
     </span>)
     .unwrap();
-    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_KV_CACHE_BATCH_GET_HIT_RATE: Gauge = <span class="macro">register_gauge!</span>(
-        <span class="string">&quot;meta_kv_cache_batch_get_hit_rate&quot;</span>,
-        <span class="string">&quot;meta kv cache batch get hit rate&quot;
-    </span>)
-    .unwrap();
+    <span class="doccomment">/// Meta kv cache hit counter.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_KV_CACHE_HIT: IntCounterVec =
+        <span class="macro">register_int_counter_vec!</span>(<span class="string">&quot;meta_kv_cache_hit&quot;</span>, <span class="string">&quot;meta kv cache hit&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;op&quot;</span>]).unwrap();
+    <span class="doccomment">/// Meta kv cache miss counter.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_KV_CACHE_MISS: IntCounterVec =
+        <span class="macro">register_int_counter_vec!</span>(<span class="string">&quot;meta_kv_cache_miss&quot;</span>, <span class="string">&quot;meta kv cache miss&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;op&quot;</span>]).unwrap();
 }
 </code></pre></div></section></main></body></html>
