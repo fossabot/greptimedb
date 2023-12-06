@@ -608,12 +608,6 @@
 <a href="#608" id="608">608</a>
 <a href="#609" id="609">609</a>
 <a href="#610" id="610">610</a>
-<a href="#611" id="611">611</a>
-<a href="#612" id="612">612</a>
-<a href="#613" id="613">613</a>
-<a href="#614" id="614">614</a>
-<a href="#615" id="615">615</a>
-<a href="#616" id="616">616</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -666,7 +660,7 @@
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>store_api::metadata::RegionMetadataRef;
 <span class="kw">use </span>store_api::region_engine::{RegionEngineRef, RegionRole, SetReadonlyResponse};
-<span class="kw">use </span>store_api::region_request::{RegionCloseRequest, RegionRequest};
+<span class="kw">use </span>store_api::region_request::{AffectedRows, RegionCloseRequest, RegionRequest};
 <span class="kw">use </span>store_api::storage::{RegionId, ScanRequest};
 <span class="kw">use </span>substrait::{DFLogicalSubstraitConvertor, SubstraitPlan};
 <span class="kw">use </span>table::table::scan::StreamScanAdapter;
@@ -728,7 +722,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region_id: RegionId,
         request: RegionRequest,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;AffectedRows&gt; {
         <span class="self">self</span>.inner.handle_request(region_id, request).<span class="kw">await
     </span>}
 
@@ -825,13 +819,7 @@
         // only insert/delete will have multiple results.
         </span><span class="kw">let </span><span class="kw-2">mut </span>affected_rows = <span class="number">0</span>;
         <span class="kw">for </span>result <span class="kw">in </span>results {
-            <span class="kw">match </span>result {
-                Output::AffectedRows(rows) =&gt; affected_rows += rows,
-                Output::Stream(<span class="kw">_</span>) | Output::RecordBatches(<span class="kw">_</span>) =&gt; {
-                    <span class="comment">// TODO: change the output type to only contains `affected_rows`
-                    </span><span class="macro">unreachable!</span>()
-                }
-            }
+            affected_rows += result;
         }
 
         <span class="prelude-val">Ok</span>(RegionResponse {
@@ -910,7 +898,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region_id: RegionId,
         request: RegionRequest,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;AffectedRows&gt; {
         <span class="kw">let </span>request_type = request.request_type();
         <span class="kw">let </span>_timer = <span class="kw">crate</span>::metrics::HANDLE_REGION_REQUEST_ELAPSED
             .with_label_values(<span class="kw-2">&amp;</span>[request_type])

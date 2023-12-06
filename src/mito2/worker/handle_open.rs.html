@@ -84,7 +84,6 @@
 <a href="#84" id="84">84</a>
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
-<a href="#87" id="87">87</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -103,12 +102,11 @@
 
 </span><span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>object_store::util::join_path;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>store_api::logstore::LogStore;
-<span class="kw">use </span>store_api::region_request::RegionOpenRequest;
+<span class="kw">use </span>store_api::region_request::{AffectedRows, RegionOpenRequest};
 <span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{ObjectStoreNotFoundSnafu, OpenDalSnafu, RegionNotFoundSnafu, <span class="prelude-ty">Result</span>};
@@ -122,9 +120,9 @@
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         region_id: RegionId,
         request: RegionOpenRequest,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;AffectedRows&gt; {
         <span class="kw">if </span><span class="self">self</span>.regions.is_region_exists(region_id) {
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>));
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="number">0</span>);
         }
         <span class="kw">let </span>object_store = <span class="kw">if let </span><span class="prelude-val">Some</span>(storage_name) = request.options.get(<span class="string">&quot;storage&quot;</span>) {
             <span class="self">self</span>.object_store_manager
@@ -169,7 +167,7 @@
         <span class="comment">// Insert the MitoRegion into the RegionMap.
         </span><span class="self">self</span>.regions.insert_region(Arc::new(region));
 
-        <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
+        <span class="prelude-val">Ok</span>(<span class="number">0</span>)
     }
 }
 </code></pre></div></section></main></body></html>

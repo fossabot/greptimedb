@@ -345,15 +345,6 @@
 <a href="#345" id="345">345</a>
 <a href="#346" id="346">346</a>
 <a href="#347" id="347">347</a>
-<a href="#348" id="348">348</a>
-<a href="#349" id="349">349</a>
-<a href="#350" id="350">350</a>
-<a href="#351" id="351">351</a>
-<a href="#352" id="352">352</a>
-<a href="#353" id="353">353</a>
-<a href="#354" id="354">354</a>
-<a href="#355" id="355">355</a>
-<a href="#356" id="356">356</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -373,11 +364,9 @@
 <span class="kw">use </span>ahash::RandomState;
 <span class="kw">use </span>api::v1::value::ValueData;
 <span class="kw">use </span>api::v1::{ColumnDataType, ColumnSchema, Row, Rows, SemanticType};
-<span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::{error, info};
-<span class="kw">use </span>datatypes::data_type::ConcreteDataType;
 <span class="kw">use </span>snafu::OptionExt;
-<span class="kw">use </span>store_api::region_request::RegionPutRequest;
+<span class="kw">use </span>store_api::region_request::{AffectedRows, RegionPutRequest};
 <span class="kw">use </span>store_api::storage::{RegionId, TableId};
 
 <span class="kw">use </span><span class="kw">crate</span>::consts::{DATA_SCHEMA_TABLE_ID_COLUMN_NAME, DATA_SCHEMA_TSID_COLUMN_NAME, RANDOM_STATE};
@@ -394,7 +383,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region_id: RegionId,
         request: RegionPutRequest,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;AffectedRows&gt; {
         <span class="kw">let </span>is_putting_physical_region = <span class="self">self
             </span>.state
             .read()
@@ -418,7 +407,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         logical_region_id: RegionId,
         <span class="kw-2">mut </span>request: RegionPutRequest,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;AffectedRows&gt; {
         <span class="kw">let </span>physical_region_id = <span class="kw-2">*</span><span class="self">self
             </span>.state
             .read()
@@ -564,7 +553,6 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-
     <span class="kw">use </span>common_recordbatch::RecordBatches;
     <span class="kw">use </span>store_api::region_engine::RegionEngine;
     <span class="kw">use </span>store_api::region_request::RegionRequest;
@@ -587,14 +575,11 @@
 
         <span class="comment">// write data
         </span><span class="kw">let </span>logical_region_id = env.default_logical_region_id();
-        <span class="kw">let </span>Output::AffectedRows(count) = env
+        <span class="kw">let </span>count = env
             .metric()
             .handle_request(logical_region_id, request)
             .<span class="kw">await
-            </span>.unwrap()
-        <span class="kw">else </span>{
-            <span class="macro">panic!</span>()
-        };
+            </span>.unwrap();
         <span class="macro">assert_eq!</span>(count, <span class="number">5</span>);
 
         <span class="comment">// read data from physical region
@@ -662,13 +647,10 @@
         });
 
         <span class="comment">// write data
-        </span><span class="kw">let </span>Output::AffectedRows(count) = engine
+        </span><span class="kw">let </span>count = engine
             .handle_request(logical_region_id, request)
             .<span class="kw">await
-            </span>.unwrap()
-        <span class="kw">else </span>{
-            <span class="macro">panic!</span>()
-        };
+            </span>.unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">100</span>, count);
     }
 

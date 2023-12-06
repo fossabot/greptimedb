@@ -173,6 +173,9 @@
 <a href="#173" id="173">173</a>
 <a href="#174" id="174">174</a>
 <a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -191,12 +194,12 @@
 
 </span><span class="kw">use </span>std::time::Duration;
 
-<span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::{info, warn};
 <span class="kw">use </span>futures::TryStreamExt;
 <span class="kw">use </span>object_store::util::join_path;
 <span class="kw">use </span>object_store::{EntryMode, ObjectStore};
 <span class="kw">use </span>snafu::ResultExt;
+<span class="kw">use </span>store_api::region_request::AffectedRows;
 <span class="kw">use </span>store_api::storage::RegionId;
 <span class="kw">use </span>tokio::time::sleep;
 
@@ -209,7 +212,10 @@
 </span><span class="kw">const </span>MAX_RETRY_TIMES: u64 = <span class="number">288</span>; <span class="comment">// 24 hours (5m * 288)
 
 </span><span class="kw">impl</span>&lt;S&gt; RegionWorkerLoop&lt;S&gt; {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>handle_drop_request(<span class="kw-2">&amp;mut </span><span class="self">self</span>, region_id: RegionId) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>handle_drop_request(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        region_id: RegionId,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;AffectedRows&gt; {
         <span class="kw">let </span>region = <span class="self">self</span>.regions.writable_region(region_id)<span class="question-mark">?</span>;
 
         <span class="macro">info!</span>(<span class="string">&quot;Try to drop region: {}&quot;</span>, region_id);
@@ -261,7 +267,7 @@
             listener.on_later_drop_end(region_id, removed);
         });
 
-        <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
+        <span class="prelude-val">Ok</span>(<span class="number">0</span>)
     }
 }
 

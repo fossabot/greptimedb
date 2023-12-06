@@ -190,6 +190,9 @@
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -206,7 +209,7 @@
 
 </span><span class="kw">use </span>common_telemetry::{error, info};
 <span class="kw">use </span>snafu::OptionExt;
-<span class="kw">use </span>store_api::region_request::{AlterKind, RegionAlterRequest};
+<span class="kw">use </span>store_api::region_request::{AffectedRows, AlterKind, RegionAlterRequest};
 <span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::engine::MetricEngineInner;
@@ -220,18 +223,21 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region_id: RegionId,
         request: RegionAlterRequest,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;AffectedRows&gt; {
         <span class="kw">let </span>is_altering_logical_region = <span class="self">self
             </span>.state
             .read()
             .<span class="kw">await
             </span>.physical_regions()
             .contains_key(<span class="kw-2">&amp;</span>region_id);
-        <span class="kw">if </span>is_altering_logical_region {
+
+        <span class="kw">let </span>result = <span class="kw">if </span>is_altering_logical_region {
             <span class="self">self</span>.alter_physical_region(region_id, request).<span class="kw">await
         </span>} <span class="kw">else </span>{
             <span class="self">self</span>.alter_logical_region(region_id, request).<span class="kw">await
-        </span>}
+        </span>};
+
+        result.map(|<span class="kw">_</span>| <span class="number">0</span>)
     }
 
     <span class="kw">async fn </span>alter_logical_region(

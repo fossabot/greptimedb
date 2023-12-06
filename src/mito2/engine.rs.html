@@ -313,6 +313,9 @@
 <a href="#313" id="313">313</a>
 <a href="#314" id="314">314</a>
 <a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -359,14 +362,13 @@
 
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_error::ext::BoxedError;
-<span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::SendableRecordBatchStream;
 <span class="kw">use </span>object_store::manager::ObjectStoreManagerRef;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::metadata::RegionMetadataRef;
 <span class="kw">use </span>store_api::region_engine::{RegionEngine, RegionRole, SetReadonlyResponse};
-<span class="kw">use </span>store_api::region_request::RegionRequest;
+<span class="kw">use </span>store_api::region_request::{AffectedRows, RegionRequest};
 <span class="kw">use </span>store_api::storage::{RegionId, ScanRequest};
 
 <span class="kw">use </span><span class="kw">crate</span>::config::MitoConfig;
@@ -462,7 +464,11 @@
     }
 
     <span class="doccomment">/// Handles [RegionRequest] and return its executed result.
-    </span><span class="kw">async fn </span>handle_request(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId, request: RegionRequest) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    </span><span class="kw">async fn </span>handle_request(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        region_id: RegionId,
+        request: RegionRequest,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;AffectedRows&gt; {
         <span class="kw">let </span>_timer = HANDLE_REQUEST_ELAPSED
             .with_label_values(<span class="kw-2">&amp;</span>[request.type_name()])
             .start_timer();
@@ -535,7 +541,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region_id: RegionId,
         request: RegionRequest,
-    ) -&gt; std::result::Result&lt;Output, BoxedError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;AffectedRows, BoxedError&gt; {
         <span class="self">self</span>.inner
             .handle_request(region_id, request)
             .<span class="kw">await

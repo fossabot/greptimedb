@@ -739,7 +739,6 @@
 <a href="#739" id="739">739</a>
 <a href="#740" id="740">740</a>
 <a href="#741" id="741">741</a>
-<a href="#742" id="742">742</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -760,7 +759,6 @@
 <span class="kw">use </span>std::sync::atomic::{AtomicUsize, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::{error, info};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::storage::RegionId;
@@ -956,7 +954,7 @@
     <span class="doccomment">/// Consumes the task and notify the sender the job is success.
     </span><span class="kw">fn </span>on_success(<span class="self">self</span>) {
         <span class="kw">for </span>sender <span class="kw">in </span><span class="self">self</span>.senders {
-            sender.send(<span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>)));
+            sender.send(<span class="prelude-val">Ok</span>(<span class="number">0</span>));
         }
     }
 
@@ -1478,7 +1476,7 @@
             .unwrap();
         <span class="macro">assert!</span>(scheduler.region_status.is_empty());
         <span class="kw">let </span>output = output_rx.<span class="kw">await</span>.unwrap().unwrap();
-        <span class="macro">assert!</span>(<span class="macro">matches!</span>(output, Output::AffectedRows(<span class="number">0</span>)));
+        <span class="macro">assert_eq!</span>(output, <span class="number">0</span>);
         <span class="macro">assert!</span>(scheduler.region_status.is_empty());
     }
 }

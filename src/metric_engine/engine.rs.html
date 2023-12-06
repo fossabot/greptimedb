@@ -194,16 +194,6 @@
 <a href="#194" id="194">194</a>
 <a href="#195" id="195">195</a>
 <a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -234,7 +224,7 @@
 <span class="kw">use </span>mito2::engine::MitoEngine;
 <span class="kw">use </span>store_api::metadata::RegionMetadataRef;
 <span class="kw">use </span>store_api::region_engine::{RegionEngine, RegionRole, SetReadonlyResponse};
-<span class="kw">use </span>store_api::region_request::RegionRequest;
+<span class="kw">use </span>store_api::region_request::{AffectedRows, RegionRequest};
 <span class="kw">use </span>store_api::storage::{RegionId, ScanRequest};
 <span class="kw">use </span>tokio::sync::RwLock;
 
@@ -314,30 +304,20 @@
         METRIC_ENGINE_NAME
     }
 
-    <span class="doccomment">/// Handles request to the region.
-    ///
-    /// Only query is not included, which is handled in `handle_query`
+    <span class="doccomment">/// Handles non-query request to the region. Returns the count of affected rows.
     </span><span class="kw">async fn </span>handle_request(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region_id: RegionId,
         request: RegionRequest,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Output, BoxedError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;AffectedRows, BoxedError&gt; {
         <span class="kw">let </span>result = <span class="kw">match </span>request {
             RegionRequest::Put(put) =&gt; <span class="self">self</span>.inner.put_region(region_id, put).<span class="kw">await</span>,
             RegionRequest::Delete(<span class="kw">_</span>) =&gt; <span class="macro">todo!</span>(),
-            RegionRequest::Create(create) =&gt; <span class="self">self
-                </span>.inner
-                .create_region(region_id, create)
-                .<span class="kw">await
-                </span>.map(|<span class="kw">_</span>| Output::AffectedRows(<span class="number">0</span>)),
+            RegionRequest::Create(create) =&gt; <span class="self">self</span>.inner.create_region(region_id, create).<span class="kw">await</span>,
             RegionRequest::Drop(<span class="kw">_</span>) =&gt; <span class="macro">todo!</span>(),
             RegionRequest::Open(<span class="kw">_</span>) =&gt; <span class="macro">todo!</span>(),
             RegionRequest::Close(<span class="kw">_</span>) =&gt; <span class="macro">todo!</span>(),
-            RegionRequest::Alter(alter) =&gt; <span class="self">self
-                </span>.inner
-                .alter_region(region_id, alter)
-                .<span class="kw">await
-                </span>.map(|<span class="kw">_</span>| Output::AffectedRows(<span class="number">0</span>)),
+            RegionRequest::Alter(alter) =&gt; <span class="self">self</span>.inner.alter_region(region_id, alter).<span class="kw">await</span>,
             RegionRequest::Flush(<span class="kw">_</span>) =&gt; <span class="macro">todo!</span>(),
             RegionRequest::Compact(<span class="kw">_</span>) =&gt; <span class="macro">todo!</span>(),
             RegionRequest::Truncate(<span class="kw">_</span>) =&gt; <span class="macro">todo!</span>(),

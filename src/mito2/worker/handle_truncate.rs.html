@@ -65,6 +65,9 @@
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
 <a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -81,9 +84,9 @@
 
 </span><span class="doccomment">//! Handling truncate related requests.
 
-</span><span class="kw">use </span>common_query::Output;
-<span class="kw">use </span>common_telemetry::info;
+</span><span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>store_api::logstore::LogStore;
+<span class="kw">use </span>store_api::region_request::AffectedRows;
 <span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
@@ -91,7 +94,10 @@
 <span class="kw">use </span><span class="kw">crate</span>::worker::RegionWorkerLoop;
 
 <span class="kw">impl</span>&lt;S: LogStore&gt; RegionWorkerLoop&lt;S&gt; {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>handle_truncate_request(<span class="kw-2">&amp;mut </span><span class="self">self</span>, region_id: RegionId) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>handle_truncate_request(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        region_id: RegionId,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;AffectedRows&gt; {
         <span class="kw">let </span>region = <span class="self">self</span>.regions.writable_region(region_id)<span class="question-mark">?</span>;
 
         <span class="macro">info!</span>(<span class="string">&quot;Try to truncate region {}&quot;</span>, region_id);
@@ -129,7 +135,7 @@
             region_id, truncated_entry_id, truncated_sequence
         );
 
-        <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
+        <span class="prelude-val">Ok</span>(<span class="number">0</span>)
     }
 }
 </code></pre></div></section></main></body></html>

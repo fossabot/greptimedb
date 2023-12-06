@@ -558,6 +558,8 @@
 <a href="#558" id="558">558</a>
 <a href="#559" id="559">559</a>
 <a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -585,7 +587,7 @@
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>store_api::metadata::ColumnMetadata;
 <span class="kw">use </span>store_api::region_engine::RegionEngine;
-<span class="kw">use </span>store_api::region_request::{RegionCreateRequest, RegionRequest};
+<span class="kw">use </span>store_api::region_request::{AffectedRows, RegionCreateRequest, RegionRequest};
 <span class="kw">use </span>store_api::storage::consts::ReservedColumnId;
 <span class="kw">use </span>store_api::storage::RegionId;
 
@@ -610,16 +612,18 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region_id: RegionId,
         request: RegionCreateRequest,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;AffectedRows&gt; {
         <span class="self">Self</span>::verify_region_create_request(<span class="kw-2">&amp;</span>request)<span class="question-mark">?</span>;
 
-        <span class="kw">if </span>request.options.contains_key(PHYSICAL_TABLE_METADATA_KEY) {
+        <span class="kw">let </span>result = <span class="kw">if </span>request.options.contains_key(PHYSICAL_TABLE_METADATA_KEY) {
             <span class="self">self</span>.create_physical_region(region_id, request).<span class="kw">await
         </span>} <span class="kw">else if </span>request.options.contains_key(LOGICAL_TABLE_METADATA_KEY) {
             <span class="self">self</span>.create_logical_region(region_id, request).<span class="kw">await
         </span>} <span class="kw">else </span>{
             MissingRegionOptionSnafu {}.fail()
-        }
+        };
+
+        result.map(|<span class="kw">_</span>| <span class="number">0</span>)
     }
 
     <span class="doccomment">/// Initialize a physical metric region at given region id.

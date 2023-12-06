@@ -245,7 +245,6 @@
 <a href="#245" id="245">245</a>
 <a href="#246" id="246">246</a>
 <a href="#247" id="247">247</a>
-<a href="#248" id="248">248</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -261,14 +260,13 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>api::v1::SemanticType;
-<span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::tracing::warn;
 <span class="kw">use </span>mito2::engine::MitoEngine;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::metadata::ColumnMetadata;
 <span class="kw">use </span>store_api::region_engine::RegionEngine;
 <span class="kw">use </span>store_api::region_request::{
-    AddColumn, AlterKind, RegionAlterRequest, RegionPutRequest, RegionRequest,
+    AddColumn, AffectedRows, AlterKind, RegionAlterRequest, RegionPutRequest, RegionRequest,
 };
 <span class="kw">use </span>store_api::storage::consts::ReservedColumnId;
 <span class="kw">use </span>store_api::storage::RegionId;
@@ -385,7 +383,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region_id: RegionId,
         request: RegionPutRequest,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;AffectedRows&gt; {
         <span class="kw">let </span>region_id = utils::to_data_region_id(region_id);
         <span class="self">self</span>.mito
             .handle_request(region_id, RegionRequest::Put(request))

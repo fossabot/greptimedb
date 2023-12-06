@@ -322,7 +322,6 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_catalog::consts::FILE_ENGINE;
 <span class="kw">use </span>common_error::ext::BoxedError;
-<span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::SendableRecordBatchStream;
 <span class="kw">use </span>common_telemetry::{error, info};
 <span class="kw">use </span>object_store::ObjectStore;
@@ -330,7 +329,8 @@
 <span class="kw">use </span>store_api::metadata::RegionMetadataRef;
 <span class="kw">use </span>store_api::region_engine::{RegionEngine, RegionRole, SetReadonlyResponse};
 <span class="kw">use </span>store_api::region_request::{
-    RegionCloseRequest, RegionCreateRequest, RegionDropRequest, RegionOpenRequest, RegionRequest,
+    AffectedRows, RegionCloseRequest, RegionCreateRequest, RegionDropRequest, RegionOpenRequest,
+    RegionRequest,
 };
 <span class="kw">use </span>store_api::storage::{RegionId, ScanRequest};
 <span class="kw">use </span>tokio::sync::Mutex;
@@ -363,7 +363,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region_id: RegionId,
         request: RegionRequest,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Output, BoxedError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;AffectedRows, BoxedError&gt; {
         <span class="self">self</span>.inner
             .handle_request(region_id, request)
             .<span class="kw">await
@@ -453,7 +453,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region_id: RegionId,
         request: RegionRequest,
-    ) -&gt; EngineResult&lt;Output&gt; {
+    ) -&gt; EngineResult&lt;AffectedRows&gt; {
         <span class="kw">match </span>request {
             RegionRequest::Create(req) =&gt; <span class="self">self</span>.handle_create(region_id, req).<span class="kw">await</span>,
             RegionRequest::Drop(req) =&gt; <span class="self">self</span>.handle_drop(region_id, req).<span class="kw">await</span>,
@@ -491,7 +491,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region_id: RegionId,
         request: RegionCreateRequest,
-    ) -&gt; EngineResult&lt;Output&gt; {
+    ) -&gt; EngineResult&lt;AffectedRows&gt; {
         <span class="macro">ensure!</span>(
             request.engine == FILE_ENGINE,
             UnexpectedEngineSnafu {
@@ -500,7 +500,7 @@
         );
 
         <span class="kw">if </span><span class="self">self</span>.exists(region_id).<span class="kw">await </span>{
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>));
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="number">0</span>);
         }
 
         <span class="macro">info!</span>(<span class="string">&quot;Try to create region, region_id: {}&quot;</span>, region_id);
@@ -508,7 +508,7 @@
         <span class="kw">let </span>_lock = <span class="self">self</span>.region_mutex.lock().<span class="kw">await</span>;
         <span class="comment">// Check again after acquiring the lock
         </span><span class="kw">if </span><span class="self">self</span>.exists(region_id).<span class="kw">await </span>{
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>));
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="number">0</span>);
         }
 
         <span class="kw">let </span>res = FileRegion::create(region_id, request, <span class="kw-2">&amp;</span><span class="self">self</span>.object_store).<span class="kw">await</span>;
@@ -521,16 +521,16 @@
         <span class="self">self</span>.regions.write().unwrap().insert(region_id, region);
 
         <span class="macro">info!</span>(<span class="string">&quot;A new region is created, region_id: {}&quot;</span>, region_id);
-        <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
+        <span class="prelude-val">Ok</span>(<span class="number">0</span>)
     }
 
     <span class="kw">async fn </span>handle_open(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region_id: RegionId,
         request: RegionOpenRequest,
-    ) -&gt; EngineResult&lt;Output&gt; {
+    ) -&gt; EngineResult&lt;AffectedRows&gt; {
         <span class="kw">if </span><span class="self">self</span>.exists(region_id).<span class="kw">await </span>{
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>));
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="number">0</span>);
         }
 
         <span class="macro">info!</span>(<span class="string">&quot;Try to open region, region_id: {}&quot;</span>, region_id);
@@ -538,7 +538,7 @@
         <span class="kw">let </span>_lock = <span class="self">self</span>.region_mutex.lock().<span class="kw">await</span>;
         <span class="comment">// Check again after acquiring the lock
         </span><span class="kw">if </span><span class="self">self</span>.exists(region_id).<span class="kw">await </span>{
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>));
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="number">0</span>);
         }
 
         <span class="kw">let </span>res = FileRegion::open(region_id, request, <span class="kw-2">&amp;</span><span class="self">self</span>.object_store).<span class="kw">await</span>;
@@ -551,14 +551,14 @@
         <span class="self">self</span>.regions.write().unwrap().insert(region_id, region);
 
         <span class="macro">info!</span>(<span class="string">&quot;Region opened, region_id: {}&quot;</span>, region_id);
-        <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
+        <span class="prelude-val">Ok</span>(<span class="number">0</span>)
     }
 
     <span class="kw">async fn </span>handle_close(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region_id: RegionId,
         _request: RegionCloseRequest,
-    ) -&gt; EngineResult&lt;Output&gt; {
+    ) -&gt; EngineResult&lt;AffectedRows&gt; {
         <span class="kw">let </span>_lock = <span class="self">self</span>.region_mutex.lock().<span class="kw">await</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>regions = <span class="self">self</span>.regions.write().unwrap();
@@ -566,14 +566,14 @@
             <span class="macro">info!</span>(<span class="string">&quot;Region closed, region_id: {}&quot;</span>, region_id);
         }
 
-        <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
+        <span class="prelude-val">Ok</span>(<span class="number">0</span>)
     }
 
     <span class="kw">async fn </span>handle_drop(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region_id: RegionId,
         _request: RegionDropRequest,
-    ) -&gt; EngineResult&lt;Output&gt; {
+    ) -&gt; EngineResult&lt;AffectedRows&gt; {
         <span class="kw">if </span>!<span class="self">self</span>.exists(region_id).<span class="kw">await </span>{
             <span class="kw">return </span>RegionNotFoundSnafu { region_id }.fail();
         }
@@ -595,7 +595,7 @@
         <span class="kw">let _ </span>= <span class="self">self</span>.regions.write().unwrap().remove(<span class="kw-2">&amp;</span>region_id);
 
         <span class="macro">info!</span>(<span class="string">&quot;Region dropped, region_id: {}&quot;</span>, region_id);
-        <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
+        <span class="prelude-val">Ok</span>(<span class="number">0</span>)
     }
 
     <span class="kw">async fn </span>get_region(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; <span class="prelude-ty">Option</span>&lt;FileRegionRef&gt; {
