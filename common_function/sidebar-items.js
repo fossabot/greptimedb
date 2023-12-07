@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["scalars"]};
+window.SIDEBAR_ITEMS = {"mod":["helper","scalars"]};
