@@ -73,6 +73,13 @@
 <a href="#73" id="73">73</a>
 <a href="#74" id="74">74</a>
 <a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -93,6 +100,7 @@
 
 <span class="kw">use </span>std::any::Any;
 
+<span class="kw">use </span>common_procedure::Status;
 <span class="kw">use </span>common_telemetry::warn;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
@@ -116,12 +124,15 @@
 <span class="attr">#[async_trait::async_trait]
 #[typetag::serde]
 </span><span class="kw">impl </span>State <span class="kw">for </span>UpdateMetadata {
-    <span class="kw">async fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>Context) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>State&gt;&gt; {
+    <span class="kw">async fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>Context) -&gt; <span class="prelude-ty">Result</span>&lt;(Box&lt;<span class="kw">dyn </span>State&gt;, Status)&gt; {
         <span class="kw">match </span><span class="self">self </span>{
             UpdateMetadata::Downgrade =&gt; {
                 <span class="self">self</span>.downgrade_leader_region(ctx).<span class="kw">await</span><span class="question-mark">?</span>;
 
-                <span class="prelude-val">Ok</span>(Box::&lt;DowngradeLeaderRegion&gt;::default())
+                <span class="prelude-val">Ok</span>((
+                    Box::&lt;DowngradeLeaderRegion&gt;::default(),
+                    Status::executing(<span class="bool-val">false</span>),
+                ))
             }
             UpdateMetadata::Upgrade =&gt; {
                 <span class="self">self</span>.upgrade_candidate_region(ctx).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -129,7 +140,7 @@
                 <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = ctx.invalidate_table_cache().<span class="kw">await </span>{
                     <span class="macro">warn!</span>(<span class="string">&quot;Failed to broadcast the invalidate table cache message during the upgrade candidate, error: {err:?}&quot;</span>);
                 };
-                <span class="prelude-val">Ok</span>(Box::new(RegionMigrationEnd))
+                <span class="prelude-val">Ok</span>((Box::new(RegionMigrationEnd), Status::Done))
             }
             UpdateMetadata::Rollback =&gt; {
                 <span class="self">self</span>.rollback_downgraded_region(ctx).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -137,9 +148,12 @@
                 <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = ctx.invalidate_table_cache().<span class="kw">await </span>{
                     <span class="macro">warn!</span>(<span class="string">&quot;Failed to broadcast the invalidate table cache message during the rollback, error: {err:?}&quot;</span>);
                 };
-                <span class="prelude-val">Ok</span>(Box::new(RegionMigrationAbort::new(
-                    <span class="string">&quot;Failed to upgrade the candidate region.&quot;</span>,
-                )))
+                <span class="prelude-val">Ok</span>((
+                    Box::new(RegionMigrationAbort::new(
+                        <span class="string">&quot;Failed to upgrade the candidate region.&quot;</span>,
+                    )),
+                    Status::executing(<span class="bool-val">false</span>),
+                ))
             }
         }
     }

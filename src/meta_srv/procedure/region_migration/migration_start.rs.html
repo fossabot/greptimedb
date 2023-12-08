@@ -282,6 +282,14 @@
 <a href="#282" id="282">282</a>
 <a href="#283" id="283">283</a>
 <a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -300,17 +308,25 @@
 
 <span class="kw">use </span>common_meta::peer::Peer;
 <span class="kw">use </span>common_meta::rpc::router::RegionRoute;
+<span class="kw">use </span>common_procedure::Status;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::OptionExt;
 <span class="kw">use </span>store_api::storage::RegionId;
 
-<span class="kw">use </span><span class="kw">super</span>::downgrade_leader_region::DowngradeLeaderRegion;
 <span class="kw">use </span><span class="kw">super</span>::migration_end::RegionMigrationEnd;
 <span class="kw">use </span><span class="kw">super</span>::open_candidate_region::OpenCandidateRegion;
+<span class="kw">use </span><span class="kw">super</span>::update_metadata::UpdateMetadata;
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::procedure::region_migration::{Context, State};
 
-<span class="attr">#[derive(Debug, Serialize, Deserialize)]
+<span class="doccomment">/// The behaviors:
+///
+/// If the expected leader region has been opened on `to_peer`, go to the [RegionMigrationEnd] state.
+///
+/// If the candidate region has been opened on `to_peer`, go to the [UpdateMetadata::Downgrade] state.
+///
+/// Otherwise go to the [OpenCandidateRegion] state.
+</span><span class="attr">#[derive(Debug, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>RegionMigrationStart;
 
 <span class="attr">#[async_trait::async_trait]
@@ -318,22 +334,22 @@
 </span><span class="kw">impl </span>State <span class="kw">for </span>RegionMigrationStart {
     <span class="doccomment">/// Yields next [State].
     ///
-    /// If the expected leader region has been opened on `to_peer`, go to the MigrationEnd state.
+    /// If the expected leader region has been opened on `to_peer`, go to the [RegionMigrationEnd] state.
     ///
-    /// If the candidate region has been opened on `to_peer`, go to the DowngradeLeader state.
+    /// If the candidate region has been opened on `to_peer`, go to the [UpdateMetadata::Downgrade] state.
     ///
-    /// Otherwise go to the OpenCandidateRegion state.
-    </span><span class="kw">async fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>Context) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>State&gt;&gt; {
+    /// Otherwise go to the [OpenCandidateRegion] state.
+    </span><span class="kw">async fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>Context) -&gt; <span class="prelude-ty">Result</span>&lt;(Box&lt;<span class="kw">dyn </span>State&gt;, Status)&gt; {
         <span class="kw">let </span>region_id = ctx.persistent_ctx.region_id;
         <span class="kw">let </span>region_route = <span class="self">self</span>.retrieve_region_route(ctx, region_id).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>to_peer = <span class="kw-2">&amp;</span>ctx.persistent_ctx.to_peer;
 
         <span class="kw">if </span><span class="self">self</span>.check_leader_region_on_peer(<span class="kw-2">&amp;</span>region_route, to_peer)<span class="question-mark">? </span>{
-            <span class="prelude-val">Ok</span>(Box::new(RegionMigrationEnd))
+            <span class="prelude-val">Ok</span>((Box::new(RegionMigrationEnd), Status::Done))
         } <span class="kw">else if </span><span class="self">self</span>.check_candidate_region_on_peer(<span class="kw-2">&amp;</span>region_route, to_peer) {
-            <span class="prelude-val">Ok</span>(Box::&lt;DowngradeLeaderRegion&gt;::default())
+            <span class="prelude-val">Ok</span>((Box::new(UpdateMetadata::Downgrade), Status::executing(<span class="bool-val">true</span>)))
         } <span class="kw">else </span>{
-            <span class="prelude-val">Ok</span>(Box::new(OpenCandidateRegion))
+            <span class="prelude-val">Ok</span>((Box::new(OpenCandidateRegion), Status::executing(<span class="bool-val">true</span>)))
         }
     }
 
@@ -422,6 +438,7 @@
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::error::Error;
     <span class="kw">use </span><span class="kw">crate</span>::procedure::region_migration::test_util::{<span class="self">self</span>, TestingEnv};
+    <span class="kw">use </span><span class="kw">crate</span>::procedure::region_migration::update_metadata::UpdateMetadata;
     <span class="kw">use </span><span class="kw">crate</span>::procedure::region_migration::{ContextFactory, PersistentContext};
 
     <span class="kw">fn </span>new_persistent_context() -&gt; PersistentContext {
@@ -500,12 +517,11 @@
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="kw">let </span>next = state.next(<span class="kw-2">&amp;mut </span>ctx).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>(next, <span class="kw">_</span>) = state.next(<span class="kw-2">&amp;mut </span>ctx).<span class="kw">await</span>.unwrap();
 
-        <span class="kw">let _ </span>= next
-            .as_any()
-            .downcast_ref::&lt;DowngradeLeaderRegion&gt;()
-            .unwrap();
+        <span class="kw">let </span>update_metadata = next.as_any().downcast_ref::&lt;UpdateMetadata&gt;().unwrap();
+
+        <span class="macro">assert_matches!</span>(update_metadata, UpdateMetadata::Downgrade);
     }
 
     <span class="attr">#[tokio::test]
@@ -534,7 +550,7 @@
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="kw">let </span>next = state.next(<span class="kw-2">&amp;mut </span>ctx).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>(next, <span class="kw">_</span>) = state.next(<span class="kw-2">&amp;mut </span>ctx).<span class="kw">await</span>.unwrap();
 
         <span class="kw">let _ </span>= next.as_any().downcast_ref::&lt;RegionMigrationEnd&gt;().unwrap();
     }
@@ -561,7 +577,7 @@
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="kw">let </span>next = state.next(<span class="kw-2">&amp;mut </span>ctx).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>(next, <span class="kw">_</span>) = state.next(<span class="kw-2">&amp;mut </span>ctx).<span class="kw">await</span>.unwrap();
 
         <span class="kw">let _ </span>= next.as_any().downcast_ref::&lt;OpenCandidateRegion&gt;().unwrap();
     }

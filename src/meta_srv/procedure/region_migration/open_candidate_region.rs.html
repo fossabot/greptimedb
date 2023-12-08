@@ -443,6 +443,10 @@
 <a href="#443" id="443">443</a>
 <a href="#444" id="444">444</a>
 <a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -466,6 +470,7 @@
 <span class="kw">use </span>common_meta::distributed_time_constants::MAILBOX_RTT_SECS;
 <span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply, OpenRegion, SimpleReply};
 <span class="kw">use </span>common_meta::RegionIdent;
+<span class="kw">use </span>common_procedure::Status;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 
@@ -483,11 +488,14 @@
 <span class="attr">#[async_trait::async_trait]
 #[typetag::serde]
 </span><span class="kw">impl </span>State <span class="kw">for </span>OpenCandidateRegion {
-    <span class="kw">async fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>Context) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>State&gt;&gt; {
+    <span class="kw">async fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>Context) -&gt; <span class="prelude-ty">Result</span>&lt;(Box&lt;<span class="kw">dyn </span>State&gt;, Status)&gt; {
         <span class="kw">let </span>instruction = <span class="self">self</span>.build_open_region_instruction(ctx).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.open_candidate_region(ctx, instruction).<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(Box::&lt;DowngradeLeaderRegion&gt;::default())
+        <span class="prelude-val">Ok</span>((
+            Box::&lt;DowngradeLeaderRegion&gt;::default(),
+            Status::executing(<span class="bool-val">false</span>),
+        ))
     }
 
     <span class="kw">fn </span>as_any(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any {
@@ -875,7 +883,7 @@
 
         send_mock_reply(mailbox, rx, |id| <span class="prelude-val">Ok</span>(new_open_region_reply(id, <span class="bool-val">true</span>, <span class="prelude-val">None</span>)));
 
-        <span class="kw">let </span>next = state.next(<span class="kw-2">&amp;mut </span>ctx).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>(next, <span class="kw">_</span>) = state.next(<span class="kw-2">&amp;mut </span>ctx).<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>vc = ctx.volatile_ctx;
         <span class="macro">assert_eq!</span>(
             vc.opening_region_guard.unwrap().info(),
