@@ -221,6 +221,13 @@
 <a href="#221" id="221">221</a>
 <a href="#222" id="222">222</a>
 <a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -278,10 +285,12 @@
                             <span class="prelude-val">Some</span>(header) =&gt; header,
                             <span class="prelude-val">None </span>=&gt; {
                                 <span class="kw">let </span>err = error::MissingRequestHeaderSnafu {}.build();
-                                tx.send(<span class="prelude-val">Err</span>(err.into())).<span class="kw">await</span>.expect(<span class="string">&quot;working rx&quot;</span>);
+                                <span class="macro">error!</span>(<span class="string">&quot;Exit on malformed request: MissingRequestHeader&quot;</span>);
+                                <span class="kw">let _ </span>= tx.send(<span class="prelude-val">Err</span>(err.into())).<span class="kw">await</span>;
                                 <span class="kw">break</span>;
                             }
                         };
+
                         <span class="macro">debug!</span>(<span class="string">&quot;Receiving heartbeat request: {:?}&quot;</span>, req);
 
                         <span class="kw">if </span>pusher_key.is_none() {
@@ -301,7 +310,10 @@
                         is_not_leader = res.as_ref().map_or(<span class="bool-val">false</span>, |r| r.is_not_leader());
 
                         <span class="macro">debug!</span>(<span class="string">&quot;Sending heartbeat response: {:?}&quot;</span>, res);
-                        tx.send(res).<span class="kw">await</span>.expect(<span class="string">&quot;working rx&quot;</span>);
+                        <span class="kw">if </span>tx.send(res).<span class="kw">await</span>.is_err() {
+                            <span class="macro">info!</span>(<span class="string">&quot;ReceiverStream was dropped; shutting down&quot;</span>);
+                            <span class="kw">break</span>;
+                        }
                     }
                     <span class="prelude-val">Err</span>(err) =&gt; {
                         <span class="kw">if let </span><span class="prelude-val">Some</span>(io_err) = error::match_for_io_error(<span class="kw-2">&amp;</span>err) {
@@ -312,10 +324,10 @@
                             }
                         }
 
-                        <span class="kw">match </span>tx.send(<span class="prelude-val">Err</span>(err)).<span class="kw">await </span>{
-                            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; (),
-                            <span class="prelude-val">Err</span>(_err) =&gt; <span class="kw">break</span>, <span class="comment">// response was dropped
-                        </span>}
+                        <span class="kw">if </span>tx.send(<span class="prelude-val">Err</span>(err)).<span class="kw">await</span>.is_err() {
+                            <span class="macro">info!</span>(<span class="string">&quot;ReceiverStream was dropped; shutting down&quot;</span>);
+                            <span class="kw">break</span>;
+                        }
                     }
                 }
 
@@ -324,10 +336,12 @@
                     <span class="kw">break</span>;
                 }
             }
+
             <span class="macro">info!</span>(
-                <span class="string">&quot;Heartbeat stream broken: {:?}&quot;</span>,
+                <span class="string">&quot;Heartbeat stream closed: {:?}&quot;</span>,
                 pusher_key.as_ref().unwrap_or(<span class="kw-2">&amp;</span><span class="string">&quot;unknown&quot;</span>.to_string())
             );
+
             <span class="kw">if let </span><span class="prelude-val">Some</span>(key) = pusher_key {
                 <span class="kw">let _ </span>= handler_group.unregister(<span class="kw-2">&amp;</span>key).<span class="kw">await</span>;
             }
