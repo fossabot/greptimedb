@@ -2458,6 +2458,7 @@
 <a href="#2458" id="2458">2458</a>
 <a href="#2459" id="2459">2459</a>
 <a href="#2460" id="2460">2460</a>
+<a href="#2461" id="2461">2461</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -3477,7 +3478,8 @@
             }
             <span class="string">&quot;predict_linear&quot; </span>=&gt; {
                 <span class="kw">let </span>t_expr = <span class="kw">match </span>other_input_exprs.pop_front() {
-                    <span class="prelude-val">Some</span>(DfExpr::Literal(ScalarValue::Time64Microsecond(<span class="prelude-val">Some</span>(t)))) =&gt; t,
+                    <span class="prelude-val">Some</span>(DfExpr::Literal(ScalarValue::Float64(<span class="prelude-val">Some</span>(t)))) =&gt; t <span class="kw">as </span>i64,
+                    <span class="prelude-val">Some</span>(DfExpr::Literal(ScalarValue::Int64(<span class="prelude-val">Some</span>(t)))) =&gt; t,
                     other =&gt; UnexpectedPlanExprSnafu {
                         desc: <span class="macro">format!</span>(<span class="string">&quot;expect i64 literal as t, but found {:?}&quot;</span>, other),
                     }

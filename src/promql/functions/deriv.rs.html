@@ -77,6 +77,33 @@
 <a href="#77" id="77">77</a>
 <a href="#78" id="78">78</a>
 <a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -121,6 +148,8 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
+    <span class="kw">use </span>std::sync::Arc;
+
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::functions::test_util::simple_range_udf_runner;
 
@@ -152,7 +181,32 @@
             Deriv::scalar_udf(),
             ts_array,
             value_array,
-            <span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">0.010606060606060607</span>), <span class="prelude-val">None</span>],
+            <span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">10.606060606060607</span>), <span class="prelude-val">None</span>],
+        );
+    }
+
+    <span class="comment">// From prometheus `promql/functions_test.go` case `TestDeriv`
+    </span><span class="attr">#[test]
+    </span><span class="kw">fn </span>complicate_deriv() {
+        <span class="kw">let </span>start = <span class="number">1493712816939</span>;
+        <span class="kw">let </span>interval = <span class="number">30 </span>* <span class="number">1000</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>ts_data = <span class="macro">vec!</span>[];
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">15 </span>{
+            <span class="kw">let </span>jitter = <span class="number">12 </span>* i % <span class="number">2</span>;
+            ts_data.push(<span class="prelude-val">Some</span>(start + interval * i + jitter));
+        }
+        <span class="kw">let </span>val_data = <span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">1.0</span>); <span class="number">15</span>];
+        <span class="kw">let </span>ts_array = Arc::new(TimestampMillisecondArray::from_iter(ts_data));
+        <span class="kw">let </span>val_array = Arc::new(Float64Array::from_iter(val_data));
+        <span class="kw">let </span>range = [(<span class="number">0</span>, <span class="number">15</span>)];
+        <span class="kw">let </span>ts_range_array = RangeArray::from_ranges(ts_array, range).unwrap();
+        <span class="kw">let </span>value_range_array = RangeArray::from_ranges(val_array, range).unwrap();
+
+        simple_range_udf_runner(
+            Deriv::scalar_udf(),
+            ts_range_array,
+            value_range_array,
+            <span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">0.0</span>)],
         );
     }
 }

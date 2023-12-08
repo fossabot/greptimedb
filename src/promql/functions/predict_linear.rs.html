@@ -262,6 +262,8 @@
 <a href="#262" id="262">262</a>
 <a href="#263" id="263">263</a>
 <a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -294,7 +296,8 @@
 <span class="kw">use </span><span class="kw">crate</span>::range_array::RangeArray;
 
 <span class="kw">pub struct </span>PredictLinear {
-    t: i64,
+    <span class="doccomment">/// Duration. The second param of (`predict_linear(v range-vector, t scalar)`).
+    </span>t: i64,
 }
 
 <span class="kw">impl </span>PredictLinear {
@@ -411,8 +414,9 @@
         <span class="kw">return </span><span class="prelude-val">None</span>;
     }
 
-    <span class="kw">let </span>intercept_time = timestamps.value(<span class="number">0</span>);
-    <span class="kw">let </span>(slope, intercept) = linear_regression(timestamps, values, intercept_time);
+    <span class="comment">// last timestamp is evaluation timestamp
+    </span><span class="kw">let </span>evaluate_ts = timestamps.value(timestamps.len() - <span class="number">1</span>);
+    <span class="kw">let </span>(slope, intercept) = linear_regression(timestamps, values, evaluate_ts);
 
     <span class="kw">if </span>slope.is_none() || intercept.is_none() {
         <span class="kw">return </span><span class="prelude-val">None</span>;
@@ -474,7 +478,7 @@
             ts_array,
             value_array,
             <span class="comment">// value at t = 0
-            </span><span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">6.818181818181818</span>)],
+            </span><span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">38.63636363636364</span>)],
         );
     }
 
@@ -486,7 +490,7 @@
             ts_array,
             value_array,
             <span class="comment">// value at t = 3000
-            </span><span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">38.63636363636364</span>)],
+            </span><span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">31856.818181818187</span>)],
         );
     }
 
@@ -498,7 +502,7 @@
             ts_array,
             value_array,
             <span class="comment">// value at t = 4200
-            </span><span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">51.36363636363637</span>)],
+            </span><span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">44584.09090909091</span>)],
         );
     }
 
@@ -510,7 +514,7 @@
             ts_array,
             value_array,
             <span class="comment">// value at t = 6600
-            </span><span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">76.81818181818181</span>)],
+            </span><span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">70038.63636363638</span>)],
         );
     }
 
@@ -522,7 +526,7 @@
             ts_array,
             value_array,
             <span class="comment">// value at t = 7800
-            </span><span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">89.54545454545455</span>)],
+            </span><span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">82765.9090909091</span>)],
         );
     }
 }
