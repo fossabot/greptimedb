@@ -485,13 +485,6 @@
 <a href="#485" id="485">485</a>
 <a href="#486" id="486">486</a>
 <a href="#487" id="487">487</a>
-<a href="#488" id="488">488</a>
-<a href="#489" id="489">489</a>
-<a href="#490" id="490">490</a>
-<a href="#491" id="491">491</a>
-<a href="#492" id="492">492</a>
-<a href="#493" id="493">493</a>
-<a href="#494" id="494">494</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -796,12 +789,6 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build scan predicate&quot;</span>))]
-    </span>BuildPredicate {
-        source: table::error::Error,
-        location: Location,
-    },
-
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to delete SST file, file id: {}&quot;</span>, file_id))]
     </span>DeleteSst {
         file_id: FileId,
@@ -965,7 +952,6 @@
             InvalidSender { .. } =&gt; StatusCode::InvalidArguments,
             InvalidSchedulerState { .. } =&gt; StatusCode::InvalidArguments,
             StopScheduler { .. } =&gt; StatusCode::Internal,
-            BuildPredicate { source, .. } =&gt; source.status_code(),
             DeleteSst { .. } =&gt; StatusCode::StorageUnavailable,
             FlushRegion { source, .. } =&gt; source.status_code(),
             RegionDropped { .. } =&gt; StatusCode::Cancelled,

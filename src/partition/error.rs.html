@@ -147,13 +147,6 @@
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -191,12 +184,6 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get meta info from cache, error: {}&quot;</span>, err_msg))]
     </span>GetCache { err_msg: String, location: Location },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to request Meta&quot;</span>))]
-    </span>RequestMeta {
-        location: Location,
-        source: meta_client::error::Error,
-    },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to find Datanode, table id: {}, region: {}&quot;</span>, table_id, region))]
     </span>FindDatanode {
@@ -289,7 +276,6 @@
             Error::GetCache { .. } | Error::FindLeader { .. } =&gt; StatusCode::StorageUnavailable,
             Error::FindRegionRoutes { .. } =&gt; StatusCode::InvalidArguments,
             Error::FindTableRoutes { .. } =&gt; StatusCode::InvalidArguments,
-            Error::RequestMeta { source, .. } =&gt; source.status_code(),
             Error::FindRegion { .. }
             | Error::FindRegions { .. }
             | Error::RegionKeysSize { .. }
