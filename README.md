@@ -27,7 +27,12 @@
     <a href="https://greptime.com/slack"><img src="https://img.shields.io/badge/slack-GreptimeDB-0abd59?logo=slack" alt="slack" /></a>
 </p>
 
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FGreptimeTeam%2Fgreptimedb.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FGreptimeTeam%2Fgreptimedb?ref=badge_large)
+
 ## What is GreptimeDB
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FGreptimeTeam%2Fgreptimedb.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FGreptimeTeam%2Fgreptimedb?ref=badge_shield)
+
 
 GreptimeDB is an open-source time-series database with a special focus on
 scalability, analytical capabilities and efficiency. It's designed to work on
