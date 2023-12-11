@@ -693,8 +693,6 @@
 <a href="#693" id="693">693</a>
 <a href="#694" id="694">694</a>
 <a href="#695" id="695">695</a>
-<a href="#696" id="696">696</a>
-<a href="#697" id="697">697</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -808,11 +806,10 @@
     ///
     /// The number of workers should be power of two.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>start&lt;S: LogStore&gt;(
-        config: MitoConfig,
+        config: Arc&lt;MitoConfig&gt;,
         log_store: Arc&lt;S&gt;,
         object_store_manager: ObjectStoreManagerRef,
     ) -&gt; WorkerGroup {
-        <span class="kw">let </span>config = Arc::new(config);
         <span class="kw">let </span>write_buffer_manager = Arc::new(WriteBufferManagerImpl::new(
             config.global_write_buffer_size.as_bytes() <span class="kw">as </span>usize,
         ));
@@ -902,13 +899,12 @@
     ///
     /// The number of workers should be power of two.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>start_for_test&lt;S: LogStore&gt;(
-        config: MitoConfig,
+        config: Arc&lt;MitoConfig&gt;,
         log_store: Arc&lt;S&gt;,
         object_store_manager: ObjectStoreManagerRef,
         write_buffer_manager: <span class="prelude-ty">Option</span>&lt;WriteBufferManagerRef&gt;,
         listener: <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::engine::listener::EventListenerRef&gt;,
     ) -&gt; WorkerGroup {
-        <span class="kw">let </span>config = Arc::new(config);
         <span class="kw">let </span>write_buffer_manager = write_buffer_manager.unwrap_or_else(|| {
             Arc::new(WriteBufferManagerImpl::new(
                 config.global_write_buffer_size.as_bytes() <span class="kw">as </span>usize,

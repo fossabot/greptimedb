@@ -995,6 +995,14 @@
 <a href="#995" id="995">995</a>
 <a href="#996" id="996">996</a>
 <a href="#997" id="997">997</a>
+<a href="#998" id="998">998</a>
+<a href="#999" id="999">999</a>
+<a href="#1000" id="1000">1000</a>
+<a href="#1001" id="1001">1001</a>
+<a href="#1002" id="1002">1002</a>
+<a href="#1003" id="1003">1003</a>
+<a href="#1004" id="1004">1004</a>
+<a href="#1005" id="1005">1005</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1036,6 +1044,8 @@
     TimestampNanosecondVector, TimestampSecondVector, UInt32Vector, UInt64Vector, UInt8Vector,
     Vector, VectorRef,
 };
+<span class="kw">use </span>futures::stream::BoxStream;
+<span class="kw">use </span>futures::TryStreamExt;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>store_api::metadata::RegionMetadata;
 <span class="kw">use </span>store_api::storage::{ColumnId, SequenceNumber};
@@ -1665,6 +1675,8 @@
     </span>Reader(BoxedBatchReader),
     <span class="doccomment">/// Source from a [BoxedBatchIterator].
     </span>Iter(BoxedBatchIterator),
+    <span class="doccomment">/// Source from a [BoxedBatchStream].
+    </span>Stream(BoxedBatchStream),
 }
 
 <span class="kw">impl </span>Source {
@@ -1673,6 +1685,7 @@
         <span class="kw">match </span><span class="self">self </span>{
             Source::Reader(reader) =&gt; reader.next_batch().<span class="kw">await</span>,
             Source::Iter(iter) =&gt; iter.next().transpose(),
+            Source::Stream(stream) =&gt; stream.try_next().<span class="kw">await</span>,
         }
     }
 }
@@ -1694,6 +1707,9 @@
 
 <span class="doccomment">/// Pointer to [BatchReader].
 </span><span class="kw">pub type </span>BoxedBatchReader = Box&lt;<span class="kw">dyn </span>BatchReader&gt;;
+
+<span class="doccomment">/// Pointer to a stream that yields [Batch].
+</span><span class="kw">pub type </span>BoxedBatchStream = BoxStream&lt;<span class="lifetime">&#39;static</span>, <span class="prelude-ty">Result</span>&lt;Batch&gt;&gt;;
 
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl</span>&lt;T: BatchReader + <span class="question-mark">?</span>Sized&gt; BatchReader <span class="kw">for </span>Box&lt;T&gt; {

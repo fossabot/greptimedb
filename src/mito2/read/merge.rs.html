@@ -891,6 +891,17 @@
 <a href="#891" id="891">891</a>
 <a href="#892" id="892">892</a>
 <a href="#893" id="893">893</a>
+<a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
+<a href="#896" id="896">896</a>
+<a href="#897" id="897">897</a>
+<a href="#898" id="898">898</a>
+<a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1222,6 +1233,11 @@
         MergeReaderBuilder::default()
     }
 
+    <span class="doccomment">/// Creates a builder from sources.
+    </span><span class="kw">pub fn </span>from_sources(sources: Vec&lt;Source&gt;) -&gt; MergeReaderBuilder {
+        MergeReaderBuilder { sources }
+    }
+
     <span class="doccomment">/// Pushes a batch reader to sources.
     </span><span class="kw">pub fn </span>push_batch_reader(<span class="kw-2">&amp;mut </span><span class="self">self</span>, reader: BoxedBatchReader) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="self">self</span>.sources.push(Source::Reader(reader));
@@ -1258,6 +1274,8 @@
     </span>num_output_rows: usize,
     <span class="doccomment">/// Number of deleted rows.
     </span>num_deleted_rows: usize,
+    <span class="doccomment">/// Cost to fetch batches from sources.
+    </span>fetch_cost: Duration,
 }
 
 <span class="doccomment">/// A `Node` represent an individual input data source to be merged.
@@ -1276,7 +1294,9 @@
     /// It tries to fetch one batch from the `source`.
     </span><span class="kw">async fn </span>new(<span class="kw-2">mut </span>source: Source, metrics: <span class="kw-2">&amp;mut </span>Metrics) -&gt; <span class="prelude-ty">Result</span>&lt;Node&gt; {
         <span class="comment">// Ensures batch is not empty.
-        </span><span class="kw">let </span>current_batch = source.next_batch().<span class="kw">await</span><span class="question-mark">?</span>.map(CompareFirst);
+        </span><span class="kw">let </span>start = Instant::now();
+        <span class="kw">let </span>current_batch = source.next_batch().<span class="kw">await</span><span class="question-mark">?</span>.map(CompareFirst);
+        metrics.fetch_cost += start.elapsed();
         metrics.num_input_rows += current_batch.as_ref().map(|b| b.<span class="number">0</span>.num_rows()).unwrap_or(<span class="number">0</span>);
 
         <span class="prelude-val">Ok</span>(Node {
@@ -1313,8 +1333,10 @@
     /// Panics if the node has reached EOF.
     </span><span class="kw">async fn </span>fetch_batch(<span class="kw-2">&amp;mut </span><span class="self">self</span>, metrics: <span class="kw-2">&amp;mut </span>Metrics) -&gt; <span class="prelude-ty">Result</span>&lt;Batch&gt; {
         <span class="kw">let </span>current = <span class="self">self</span>.current_batch.take().unwrap();
+        <span class="kw">let </span>start = Instant::now();
         <span class="comment">// Ensures batch is not empty.
         </span><span class="self">self</span>.current_batch = <span class="self">self</span>.source.next_batch().<span class="kw">await</span><span class="question-mark">?</span>.map(CompareFirst);
+        metrics.fetch_cost += start.elapsed();
         metrics.num_input_rows += <span class="self">self
             </span>.current_batch
             .as_ref()
